@@ -2,6 +2,8 @@ const std = @import("std");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_image = @cImport(@cInclude("SDL_image.h"));
 
+const Api = @import("api.zig").Api;
+const Game = @import("game.zig").Game;
 const assert = std.debug.assert;
 
 pub fn main() !void {
@@ -10,7 +12,7 @@ pub fn main() !void {
 
     const allocator = std.heap.page_allocator;
 
-    const win = sdl.SDL_CreateWindow("Hello", 100, 100, 256, 256, 0);
+    const win = sdl.SDL_CreateWindow("ZigZag", 100, 100, 512, 512, 0);
     assert(win != null);
     defer sdl.SDL_DestroyWindow(win);
 
@@ -18,11 +20,16 @@ pub fn main() !void {
     assert(renderer != null);
     defer sdl.SDL_DestroyRenderer(renderer);
 
+    // set up scaling.
+    _ = sdl.SDL_RenderSetLogicalSize(renderer, 128, 128);
+    _ = sdl.SDL_SetHint(sdl.SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+
     var image_renderer = @ptrCast(?*sdl_image.SDL_Renderer, renderer);
     const img = @ptrCast(?*sdl.SDL_Texture, sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
     defer sdl.SDL_DestroyTexture(img);
 
-    //var dest: sdl.SDL_Rect = .{ .w = 100, .h = 100, .x = 10, .y = 10 };
+    var api = Api.init(renderer.?, img.?);
+    var game = Game.init();
 
     var done: bool = false;
     while (!done) {
@@ -33,11 +40,20 @@ pub fn main() !void {
         }
 
         _ = sdl.SDL_RenderClear(renderer);
+
+        // Update the game.
+        game.update(api);
+        // Draw the game.
+        game.draw(api);
+
         // copy the texture to the rendering context
-        _ = sdl.SDL_RenderCopy(renderer, img, null, null); //&dest);
+        //_ = sdl.SDL_RenderCopy(renderer, img, null, null); //&dest);
         // flip the backbuffer
         // this means that everything that we prepared behind the screens is actually shown
         _ = sdl.SDL_RenderPresent(renderer);
+
+        // For now just sleep at 30fps.
+        _ = sdl.SDL_Delay(1000 / 30);
     }
 
     const f = try std.fs.openFileAbsolute(

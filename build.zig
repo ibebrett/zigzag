@@ -19,7 +19,6 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludePath("SDL2_image-devel-2.6.2-VC/SDL2_image-2.6.2/include");
 
     exe.linkLibC();
-    //exe.linkSystemLibraryName("c");
     exe.linkSystemLibraryName("SDL2");
     exe.linkSystemLibraryName("SDL2_image");
 
