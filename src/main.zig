@@ -2,7 +2,7 @@ const std = @import("std");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_image = @cImport(@cInclude("SDL_image.h"));
 
-const Api = @import("api.zig").Api;
+const Api = @import("api.zig");
 const Game = @import("game.zig").Game;
 const assert = std.debug.assert;
 
@@ -28,16 +28,44 @@ pub fn main() !void {
     const img = @ptrCast(?*sdl.SDL_Texture, sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
     defer sdl.SDL_DestroyTexture(img);
 
-    var api = Api.init(renderer.?, img.?);
+    var api = Api.Api.init(renderer.?, img.?);
     var game = Game.init();
 
     var done: bool = false;
     while (!done) {
         var event: sdl.SDL_Event = undefined;
+
+        var input_state: Api.InputState = .{};
         while (sdl.SDL_PollEvent(&event) != 0) {
-            if (event.type == sdl.SDL_QUIT)
+            if (event.type == sdl.SDL_QUIT) {
                 done = true;
+            }
+
+            if (event.type == sdl.SDL_KEYDOWN) {
+                // Detect key presses.
+                _ = switch (event.key.keysym.sym) {
+                    sdl.SDLK_a => input_state.a_pressed = true,
+                    sdl.SDLK_b => input_state.b_pressed = true,
+                    sdl.SDLK_LEFT => input_state.left_pressed = true,
+                    sdl.SDLK_RIGHT => input_state.right_pressed = true,
+                    sdl.SDLK_UP => input_state.up_pressed = true,
+                    sdl.SDLK_DOWN => input_state.down_pressed = true,
+                    else => {},
+                };
+            }
         }
+
+        // Update the input_state based on key down
+        const keys = sdl.SDL_GetKeyboardState(null);
+        input_state.a_down = keys[sdl.SDL_SCANCODE_A] == 1;
+        input_state.b_down = keys[sdl.SDL_SCANCODE_B] == 1 ;
+        input_state.left_down = keys[sdl.SDL_SCANCODE_LEFT] == 1;
+        input_state.right_down = keys[sdl.SDL_SCANCODE_RIGHT] == 1;
+        input_state.up_down = keys[sdl.SDL_SCANCODE_UP] == 1;
+        input_state.down_down = keys[sdl.SDL_SCANCODE_DOWN] == 1;
+
+        // Update the api based on input
+        api.update_input(input_state);
 
         _ = sdl.SDL_RenderClear(renderer);
 
