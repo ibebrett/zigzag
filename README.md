@@ -4,6 +4,30 @@ An extremely minimal game system for zig, inspired by another project: https://g
 
 ![Screenshot](docs/screenshot1.png)
 
+## Usage
+
+The main idea is to implement the methods of `Game`. You then directly interact with the api. Details such as windowing system, graphics system are abstracted away (in this case SDL is powering zigzag, but this can be swapped out for a different system later).
+
+The two methods you must implement are:
+
+`update` where you should update your game state.
+`draw` where you should do all of your drawing.
+
+### Graphics
+
+The screen is 128x128 (ala pico8).
+Sprites are 8x8, but can be drawn anywhere on the screen.
+
+### Input
+
+There are only 6 buttons supported: A (a), S (s), Up, Down, Left, Right.
+
+You can read the state of them with `btnp` to see if the button has been pressed this frame, or `btn` to see if the button is currently held down.
+
+### Full API Docs
+
+coming soon...
+
 ## Building
 
 ### Windows
