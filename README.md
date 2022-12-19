@@ -1,6 +1,6 @@
 # Zigzag
 
-An extremely minimal game systems for zig, inspired by another project: https://github.com/beta-bytes/bbmicro
+An extremely minimal game system for zig, inspired by another project: https://github.com/beta-bytes/bbmicro and pico8.
 
 ## Building
 
@@ -22,6 +22,4 @@ Coming soon...
 
 ## Current Status
 
-Right now building an experemintal port.
-
-## 
+Right now building an experemintal port of another project I have worked on (ibebrett) in rust. The initial commits are going to be hacking and trying things out.
