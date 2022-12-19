@@ -7,11 +7,22 @@ const assert = std.debug.assert;
 pub fn main() !void {
     assert(sdl.SDL_Init(sdl.SDL_INIT_EVERYTHING) == 0);
     _ = sdl_image.IMG_Init(sdl_image.IMG_INIT_PNG);
+
     const allocator = std.heap.page_allocator;
 
     const win = sdl.SDL_CreateWindow("Hello", 100, 100, 256, 256, 0);
     assert(win != null);
     defer sdl.SDL_DestroyWindow(win);
+
+    var renderer = sdl.SDL_CreateRenderer(win, -1, sdl.SDL_RENDERER_ACCELERATED);
+    assert(renderer != null);
+    defer sdl.SDL_DestroyRenderer(renderer);
+
+    var image_renderer = @ptrCast(?*sdl_image.SDL_Renderer, renderer);
+    const img = @ptrCast(?*sdl.SDL_Texture, sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
+    defer sdl.SDL_DestroyTexture(img);
+
+    //var dest: sdl.SDL_Rect = .{ .w = 100, .h = 100, .x = 10, .y = 10 };
 
     var done: bool = false;
     while (!done) {
@@ -20,6 +31,13 @@ pub fn main() !void {
             if (event.type == sdl.SDL_QUIT)
                 done = true;
         }
+
+        _ = sdl.SDL_RenderClear(renderer);
+        // copy the texture to the rendering context
+        _ = sdl.SDL_RenderCopy(renderer, img, null, null); //&dest);
+        // flip the backbuffer
+        // this means that everything that we prepared behind the screens is actually shown
+        _ = sdl.SDL_RenderPresent(renderer);
     }
 
     const f = try std.fs.openFileAbsolute(
@@ -50,11 +68,4 @@ pub fn main() !void {
     try stdout.print("Hello", .{});
     try bw.flush(); // don't forget to flush!
     sdl.SDL_Log("HELLO FROM SDL");
-}
-
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
