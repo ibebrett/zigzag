@@ -95,7 +95,5 @@ pub const Game = struct {
         api.map(0, 0, 0, 0, 256, 256, 0);
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
         api.map(0, 0, 0, 0, 256, 256, 1);
-
-        //api.map(12, 12, 10, 10, 256, 256, 2);
     }
 };
