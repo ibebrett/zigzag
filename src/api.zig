@@ -112,12 +112,10 @@ pub const Api = struct {
 
                 // Make sure we are drawing the range of tiles we want to.
                 if (source_tile_x < @max(celx, 0) or source_tile_x >= @min(celx + celw, 256)) {
-                    //std.debug.print("Skipping from X {d} {d}\n", .{ source_tile_x, source_tile_y });
                     continue;
                 }
 
                 if (source_tile_y < @max(cely, 0) or source_tile_y >= @min(cely + celh, 256)) {
-                    //std.debug.print("Skipping from Y {d} {d}\n", .{ source_tile_x, source_tile_y });
                     continue;
                 }
                 const tile = self.map_data[@intCast(u32, source_tile_x + source_tile_y * 256) + offset];
