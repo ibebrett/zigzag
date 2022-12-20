@@ -2,7 +2,7 @@
 
 An extremely minimal game system for zig, inspired by another project: https://github.com/beta-bytes/bbmicro and pico8.
 
-![Screenshot](docs/screenshot1.png)
+![Screenshot](docs/zigzag.gif)
 
 ## Usage
 

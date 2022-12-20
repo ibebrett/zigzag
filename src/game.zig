@@ -11,9 +11,13 @@ pub const Game = struct {
     sprite: u32 = 2,
     camera_move: bool = false,
     map_offset: u32 = 0,
+    rnd: std.rand.DefaultPrng,
+    randomize_count: u32 = 0,
 
     pub fn init(api: *Api.Api) Game {
-        // Build a random map.
+        var rnd = RndGen.init(0);
+
+        // Build a map of grass.
         var x: u32 = 0;
         var y: u32 = 0;
         while (x < 256) {
@@ -25,34 +29,7 @@ pub const Game = struct {
             y = 0;
         }
 
-        x = 0;
-        y = 0;
-        var rnd = RndGen.init(0);
-        while (x < 256) {
-            while (y < 256) {
-                if (rnd.random().int(u8) % 10 == 0) {
-                    api.mset(x, y, 20 + rnd.random().int(u8) % 4, 1);
-                }
-                y += 1;
-            }
-            x += 1;
-            y = 0;
-        }
-
-        x = 0;
-        y = 0;
-        while (x < 256) {
-            while (y < 256) {
-                if (rnd.random().int(u8) % 10 == 0) {
-                    api.mset(x, y, 4 + rnd.random().int(u8) % 4, 2);
-                }
-                y += 1;
-            }
-            x += 1;
-            y = 0;
-        }
-
-        return .{};
+        return .{ .rnd = rnd };
     }
 
     pub fn update(self: *Game, api: *Api.Api) void {
@@ -91,18 +68,34 @@ pub const Game = struct {
             self.camera_move = !self.camera_move;
         }
 
-        //self.map_offset = (1 + self.map_offset) % 4;
+        self.randomize_count = (self.randomize_count + 1) % 10;
+        // Randomize.
+        if (self.randomize_count == 0) {
+            var x: u32 = 0;
+            var y: u32 = 0;
+            while (x < 256) {
+                while (y < 256) {
+                    if (self.rnd.random().int(u8) % 10 == 0) {
+                        api.mset(x, y, 38 + self.rnd.random().int(u8) % 4, 1);
+                    } else {
+                        api.mset(x, y, 0, 1);
+                    }
+                    y += 1;
+                }
+                x += 1;
+                y = 0;
+            }
+        }
 
         api.camera(self.cx, self.cy);
     }
 
     pub fn draw(self: *Game, api: *Api.Api) void {
         // draw the map
-        api.map(12, 12, 10, 10, 256, 256, 0);
-        api.map(12, 12, 10, 10, 256, 256, 1);
-
+        api.map(0, 0, 0, 0, 256, 256, 0);
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
+        api.map(0, 0, 0, 0, 256, 256, 1);
 
-        api.map(12, 12, 10, 10, 256, 256, 2);
+        //api.map(12, 12, 10, 10, 256, 256, 2);
     }
 };
