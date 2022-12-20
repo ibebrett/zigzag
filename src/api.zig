@@ -93,8 +93,8 @@ pub const Api = struct {
 
         // Now figure out the first tile.
         // The first tile to be draw in "tile space."
-        const first_tile_x = @floatToInt(i32, math.floor(tx / 8)); //+ @intCast(i32, celx);
-        const first_tile_y = @floatToInt(i32, math.floor(ty / 8)); //+ @intCast(i32, cely);
+        const first_tile_x = @floatToInt(i32, math.floor(tx / 8));
+        const first_tile_y = @floatToInt(i32, math.floor(ty / 8));
 
         // Now draw each tile
         var screen_tile_x: i32 = -1;
@@ -111,12 +111,15 @@ pub const Api = struct {
                 const tile_y = screen_tile_y + first_tile_y;
 
                 // Make sure we are drawing the range of tiles we want to.
-                if (source_tile_x > 255 or source_tile_x < @max(cellw, 0) or source_tile_x >= celx + celw)
+                if (source_tile_x < @max(celx, 0) or source_tile_x >= @min(celx + celw, 256)) {
+                    //std.debug.print("Skipping from X {d} {d}\n", .{ source_tile_x, source_tile_y });
                     continue;
+                }
 
-                if (source_tile_y > 255 or source_tile_y < @max(cellh, 0) or source_tile_y >= cely + celh)
+                if (source_tile_y < @max(cely, 0) or source_tile_y >= @min(cely + celh, 256)) {
+                    //std.debug.print("Skipping from Y {d} {d}\n", .{ source_tile_x, source_tile_y });
                     continue;
-
+                }
                 const tile = self.map_data[@intCast(u32, source_tile_x + source_tile_y * 256) + offset];
                 self.spr(tile, sx + @intToFloat(f32, 8 * tile_x), sy + @intToFloat(f32, 8 * tile_y), 8.0, 8.0);
             }

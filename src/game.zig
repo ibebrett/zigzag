@@ -13,12 +13,39 @@ pub const Game = struct {
     map_offset: u32 = 0,
 
     pub fn init(api: *Api.Api) Game {
+        // Build a random map.
         var x: u32 = 0;
         var y: u32 = 0;
+        while (x < 256) {
+            while (y < 256) {
+                api.mset(x, y, 48, 0);
+                y += 1;
+            }
+            x += 1;
+            y = 0;
+        }
+
+        x = 0;
+        y = 0;
         var rnd = RndGen.init(0);
         while (x < 256) {
             while (y < 256) {
-                api.mset(x, y, 48 + rnd.random().int(u8) % 4, 0);
+                if (rnd.random().int(u8) % 10 == 0) {
+                    api.mset(x, y, 20 + rnd.random().int(u8) % 4, 1);
+                }
+                y += 1;
+            }
+            x += 1;
+            y = 0;
+        }
+
+        x = 0;
+        y = 0;
+        while (x < 256) {
+            while (y < 256) {
+                if (rnd.random().int(u8) % 10 == 0) {
+                    api.mset(x, y, 4 + rnd.random().int(u8) % 4, 2);
+                }
                 y += 1;
             }
             x += 1;
@@ -71,8 +98,11 @@ pub const Game = struct {
 
     pub fn draw(self: *Game, api: *Api.Api) void {
         // draw the map
-        api.map(self.map_offset, 12, 4, 4, 8, 8, 0);
+        api.map(12, 12, 10, 10, 256, 256, 0);
+        api.map(12, 12, 10, 10, 256, 256, 1);
 
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
+
+        api.map(12, 12, 10, 10, 256, 256, 2);
     }
 };
