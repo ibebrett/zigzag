@@ -6,6 +6,25 @@ const Api = @import("api.zig");
 const Game = @import("game.zig").Game;
 const assert = std.debug.assert;
 
+const FPS_PERIOD = 1000 / 30;
+
+const FPSResult = struct { freq: f32, period: u32 };
+
+const FPSCounter = struct {
+    last_ticks: u32,
+
+    pub fn init() FPSCounter {
+        return .{ .last_ticks = sdl.SDL_GetTicks() };
+    }
+
+    pub fn update(self: *FPSCounter) FPSResult {
+        const curr = sdl.SDL_GetTicks();
+        const diff = curr - self.last_ticks;
+        const freq = 1.0 / (0.000000001 + (@intToFloat(f32, diff) / 1000.0));
+        return .{ .freq = freq, .period = diff };
+    }
+};
+
 pub fn main() !void {
     assert(sdl.SDL_Init(sdl.SDL_INIT_EVERYTHING) == 0);
     _ = sdl_image.IMG_Init(sdl_image.IMG_INIT_PNG);
@@ -30,6 +49,8 @@ pub fn main() !void {
 
     var api = Api.Api.init(renderer.?, img.?);
     var game = Game.init(&api);
+
+    var fps = FPSCounter.init();
 
     var done: bool = false;
     var paused: bool = false;
@@ -82,9 +103,10 @@ pub fn main() !void {
         // this means that everything that we prepared behind the screens is actually shown
         _ = sdl.SDL_RenderPresent(renderer);
 
-        // For now just sleep at 30fps.
-        _ = sdl.SDL_Delay(1000 / 30);
+        // Attempt to stay stable at 30fps.
+        const fps_result = fps.update();
+        if (fps_result.period < FPS_PERIOD) {
+            _ = sdl.SDL_Delay(FPS_PERIOD - fps_result.period);
+        }
     }
-
-    sdl.SDL_Log("HELLO FROM SDL");
 }
