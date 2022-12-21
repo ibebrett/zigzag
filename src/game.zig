@@ -1,5 +1,6 @@
 const std = @import("std");
 const Api = @import("api.zig");
+const ApiTypes = @import("api_modules.zig");
 
 const RndGen = std.rand.DefaultPrng;
 
@@ -33,38 +34,38 @@ pub const Game = struct {
     }
 
     pub fn update(self: *Game, api: *Api.Api) void {
-        if (api.btn(Api.Button.RIGHT)) {
+        if (api.btn(ApiTypes.Button.RIGHT)) {
             if (!self.camera_move) {
                 self.x += 1.0;
             } else {
                 self.cx += 1.0;
             }
         }
-        if (api.btn(Api.Button.LEFT)) {
+        if (api.btn(ApiTypes.Button.LEFT)) {
             if (!self.camera_move) {
                 self.x -= 1.0;
             } else {
                 self.cx -= 1.0;
             }
         }
-        if (api.btn(Api.Button.DOWN)) {
+        if (api.btn(ApiTypes.Button.DOWN)) {
             if (!self.camera_move) {
                 self.y += 1.0;
             } else {
                 self.cy += 1.0;
             }
         }
-        if (api.btn(Api.Button.UP)) {
+        if (api.btn(ApiTypes.Button.UP)) {
             if (!self.camera_move) {
                 self.y -= 1.0;
             } else {
                 self.cy -= 1.0;
             }
         }
-        if (api.btnp(Api.Button.A)) {
+        if (api.btnp(ApiTypes.Button.A)) {
             self.sprite = (self.sprite + 1) % 16;
         }
-        if (api.btnp(Api.Button.B)) {
+        if (api.btnp(ApiTypes.Button.B)) {
             self.camera_move = !self.camera_move;
         }
 
@@ -95,7 +96,5 @@ pub const Game = struct {
         api.map(0, 0, 0, 0, 256, 256, 0);
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
         api.map(0, 0, 0, 0, 256, 256, 1);
-
-        //api.map(12, 12, 10, 10, 256, 256, 2);
     }
 };

@@ -4,6 +4,29 @@ An extremely minimal game system for zig, inspired by another project: https://g
 
 ![Screenshot](docs/zigzag.gif)
 
+## Building
+
+You can right now either build using SDL (on windows (more platforms coming)), or WASM.
+
+### Windows + SDL
+
+Aside from zig (obviously), you need both SDL2 and SDL_Image development releases.
+
+1. Download the sdl development release SDL2-devel-2.26.1-VC and unzip in the main directory of this repo.
+2. Download the sdl2 image development release SDL2_image-devel-2.6.2-VC and unzip in the main directory of this repo.
+3. Copy the dlls SDL2.dll and SDL2_image.dll from the unzipped folders (the 64 bit versions) from above to the build directory (zig-out/bin)
+
+4. Make sure that in `src/api.zig` Api is set to `sdl.ApiSDL`.
+   `pub const Api = sdl.ApiSDL;`
+5. Run zig build
+
+### WASM
+
+1. Make sure that in `src/api.zig` Api is set to `sdl.ApiWASM`.
+   `pub const Api = sdl.ApiWASM;`
+2. `zig build-lib src/main_wasm.zig -target wasm32-freestanding -dynamic -OReleaseFast`
+3. Serve the conents of the root of this directory with a webserver. If you like python you can run `python -m http.server' and go to http://localhost:8000.
+
 ## Usage
 
 The main idea is to implement the methods of `Game`. You then directly interact with the api. Details such as windowing system, graphics system are abstracted away (in this case SDL is powering zigzag, but this can be swapped out for a different system later).
@@ -27,23 +50,6 @@ You can read the state of them with `btnp` to see if the button has been pressed
 ### Full API Docs
 
 coming soon...
-
-## Building
-
-### Windows
-
-Aside from zig (obviously), you need both SDL2 and SDL_Image development releases.
-
-1. Download the sdl development release SDL2-devel-2.26.1-VC and unzip in the main directory of this repo.
-2. Download the sdl2 image development release SDL2_image-devel-2.6.2-VC and unzip in the main directory of this repo.
-
-You should now be able to `zig build`. To run, you will need to copy the run time dependencies to the correct folder:
-
-3. Copy the dlls SDL2.dll and SDL2_image.dll from the unzipped folders (the 64 bit versions) from above to the build directory (zig-out/bin)
-
-### Other Systems (Mac / Linux)
-
-Coming soon...
 
 ## Current Status
 

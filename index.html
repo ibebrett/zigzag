@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ZigZag</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="512" height="512"></canvas>
+    <script>
+      const newInputState = () => ({
+        a_pressed: false,
+        b_pressed: false,
+        up_pressed: false,
+        down_pressed: false,
+        left_pressed: false,
+        right_pressed: false,
+      });
+
+      (async () => {
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.scale(4, 4);
+
+        const img = await new Promise((resolve) => {
+          const img = new Image(); // Create new img element
+          img.src = "assets/sprites.png"; // Set source path
+
+          img.addEventListener(
+            "load",
+            () => {
+              resolve(img);
+            },
+            false
+          );
+        });
+
+        const wasmPromise = new Promise((resolve) => {
+          const importObject = {
+            module: {},
+            env: {
+              memory: new WebAssembly.Memory({ initial: 256 }),
+              consoleLog: () => {
+              },
+              wasmSprite: (dx, dy, dw, dh, sx, sy, sw, sh) => {
+                ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+              },
+            },
+          };
+          fetch("main_wasm.wasm")
+            .then((response) => response.arrayBuffer())
+            .then((bytes) => WebAssembly.instantiate(bytes, importObject))
+            .then((results) => {
+              resolve(results);
+            });
+        });
+
+        const wasm = await wasmPromise;
+
+        const exports = wasm.instance.exports;
+        exports.setup();
+
+        // Setup the keyboard
+        const inputState = {
+          a_pressed: false,
+          b_pressed: false,
+          up_pressed: false,
+          down_pressed: false,
+          left_pressed: false,
+          right_pressed: false,
+
+          a_down: false,
+          b_down: false,
+          up_down: false,
+          down_down: false,
+          left_down: false,
+          right_down: false,
+        };
+
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "a") {
+            inputState.a_pressed = true;
+            inputState.a_down = true;
+          }
+          if (e.key === "s") {
+            inputState.b_pressed = true;
+            inputState.b_down = true;
+          }
+          if (e.key === "ArrowDown") {
+            inputState.down_pressed = true;
+            inputState.down_down = true;
+          }
+          if (e.key === "ArrowUp") {
+            inputState.up_pressed = true;
+            inputState.up_down = true;
+          }
+          if (e.key === "ArrowLeft") {
+            inputState.left_pressed = true;
+            inputState.left_down = true;
+          }
+          if (e.key === "ArrowRight") {
+            inputState.right_pressed = true;
+            inputState.right_down = true;
+          }
+        });
+
+        document.addEventListener("keyup", (e) => {
+          if (e.key === "a") {
+            inputState.a_down = false;
+          }
+          if (e.key === "s") {
+            inputState.b_down = false;
+          }
+          if (e.key === "ArrowDown") {
+            inputState.down_down = false;
+          }
+          if (e.key === "ArrowUp") {
+            inputState.up_down = false;
+          }
+          if (e.key === "ArrowLeft") {
+            inputState.left_down = false;
+          }
+          if (e.key === "ArrowRight") {
+            inputState.right_down = false;
+          }
+        });
+
+        setInterval(() => {
+          exports.loop(
+            inputState.right_down,
+            inputState.right_pressed,
+            inputState.up_down,
+            inputState.up_pressed,
+            inputState.down_down,
+            inputState.down_pressed,
+            inputState.left_down,
+            inputState.left_pressed,
+            inputState.a_down,
+            inputState.a_pressed,
+            inputState.b_down,
+            inputState.b_pressed
+          );
+          inputState.a_pressed = false;
+          inputState.b_pressed = false;
+          inputState.up_pressed = false;
+          inputState.down_pressed = false;
+          inputState.left_pressed = false;
+          inputState.right_down = false;
+        }, 1000 / 30);
+
+        const setup = wasm.instance.exports.setup;
+        setup();
+      })();
+    </script>
+  </body>
+</html>
