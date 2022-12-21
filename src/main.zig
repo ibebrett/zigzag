@@ -2,7 +2,7 @@ const std = @import("std");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_image = @cImport(@cInclude("SDL_image.h"));
 
-const Api = @import("api.zig");
+const Api = @import("api_sdl.zig");
 const Game = @import("game.zig").Game;
 const assert = std.debug.assert;
 
@@ -47,7 +47,7 @@ pub fn main() !void {
     const img = @ptrCast(?*sdl.SDL_Texture, sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
     defer sdl.SDL_DestroyTexture(img);
 
-    var api = Api.Api.init(renderer.?, img.?);
+    var api = Api.ApiSDL.init(renderer.?, img.?);
     var game = Game.init(&api);
 
     var fps = FPSCounter.init();

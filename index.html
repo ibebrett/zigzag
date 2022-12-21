@@ -5,14 +5,15 @@
     <title>ZigZag</title>
   </head>
   <body>
-    <canvas id="canvas" width="500" height="500"></canvas>
+    <canvas id="canvas" width="512" height="512"></canvas>
     <script>
       (async () => {
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = false;
+        ctx.scale(4, 4);
 
-        const imagePromise = new Promise((resolve) => {
+        const img = await new Promise((resolve) => {
           const img = new Image(); // Create new img element
           img.src = "assets/sprites.png"; // Set source path
 
@@ -33,21 +34,30 @@
               consoleLog: () => {
                 console.log("HELLO FROM JAVASCRIPT");
               },
+              wasmSprite: (dx, dy, dw, dh, sx, sy, sw, sh) => {
+                ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+              },
             },
           };
           fetch("main_wasm.wasm")
             .then((response) => response.arrayBuffer())
             .then((bytes) => WebAssembly.instantiate(bytes, importObject))
             .then((results) => {
-              //const setup = results.instance.exports.setup;
-              //setup();
               resolve(results);
             });
         });
 
-        const [img, wasm] = await Promise.all([imagePromise, wasmPromise]);
+        const wasm = await wasmPromise;
 
-        ctx.drawImage(img, 0, 8, 8, 8, 0, 0, 8, 8);
+        const exports = wasm.instance.exports;
+        exports.setup();
+
+        setInterval(() => {
+          console.log("before");
+          exports.loop();
+          console.log("after");
+        }, 0.0);
+
         const setup = wasm.instance.exports.setup;
         setup();
       })();
