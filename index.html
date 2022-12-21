@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ZigZag</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <script>
+      (async () => {
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+
+        const imagePromise = new Promise((resolve) => {
+          const img = new Image(); // Create new img element
+          img.src = "assets/sprites.png"; // Set source path
+
+          img.addEventListener(
+            "load",
+            () => {
+              resolve(img);
+            },
+            false
+          );
+        });
+
+        const wasmPromise = new Promise((resolve) => {
+          const importObject = {
+            module: {},
+            env: {
+              memory: new WebAssembly.Memory({ initial: 256 }),
+              consoleLog: () => {
+                console.log("HELLO FROM JAVASCRIPT");
+              },
+            },
+          };
+          fetch("main_wasm.wasm")
+            .then((response) => response.arrayBuffer())
+            .then((bytes) => WebAssembly.instantiate(bytes, importObject))
+            .then((results) => {
+              //const setup = results.instance.exports.setup;
+              //setup();
+              resolve(results);
+            });
+        });
+
+        const [img, wasm] = await Promise.all([imagePromise, wasmPromise]);
+
+        ctx.drawImage(img, 0, 8, 8, 8, 0, 0, 8, 8);
+        const setup = wasm.instance.exports.setup;
+        setup();
+      })();
+    </script>
+  </body>
+</html>
