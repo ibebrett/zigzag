@@ -50,15 +50,25 @@ pub const ApiWASM = struct {
     }
 
     pub fn btnp(self: ApiWASM, button: Button) bool {
-        _ = self;
-        _ = button;
-        return false;
+        return switch (button) {
+            Button.LEFT => self.input_state.left_pressed,
+            Button.RIGHT => self.input_state.right_pressed,
+            Button.UP => self.input_state.up_pressed,
+            Button.DOWN => self.input_state.down_pressed,
+            Button.A => self.input_state.a_pressed,
+            Button.B => self.input_state.b_pressed,
+        };
     }
 
     pub fn btn(self: ApiWASM, button: Button) bool {
-        _ = self;
-        _ = button;
-        return false;
+        return switch (button) {
+            Button.LEFT => self.input_state.left_down,
+            Button.RIGHT => self.input_state.right_down,
+            Button.UP => self.input_state.up_down,
+            Button.DOWN => self.input_state.down_down,
+            Button.A => self.input_state.a_down,
+            Button.B => self.input_state.b_down,
+        };
     }
 
     pub fn camera(self: *ApiWASM, camera_x: f32, camera_y: f32) void {

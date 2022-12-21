@@ -7,6 +7,15 @@
   <body>
     <canvas id="canvas" width="512" height="512"></canvas>
     <script>
+      const newInputState = () => ({
+        a_pressed: false,
+        b_pressed: false,
+        up_pressed: false,
+        down_pressed: false,
+        left_pressed: false,
+        right_pressed: false,
+      });
+
       (async () => {
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
@@ -52,9 +61,95 @@
         const exports = wasm.instance.exports;
         exports.setup();
 
+        // Setup the keyboard
+        const inputState = {
+          a_pressed: false,
+          b_pressed: false,
+          up_pressed: false,
+          down_pressed: false,
+          left_pressed: false,
+          right_pressed: false,
+
+          a_down: false,
+          b_down: false,
+          up_down: false,
+          down_down: false,
+          left_down: false,
+          right_down: false,
+        };
+
+        document.addEventListener("keydown", (e) => {
+          console.log(e.keyCode);
+          if (e.key === "a") {
+            inputState.a_pressed = true;
+            inputState.a_down = true;
+          }
+          if (e.key === "s") {
+            inputState.b_pressed = true;
+            inputState.b_down = true;
+          }
+          if (e.key === "ArrowDown") {
+            inputState.down_pressed = true;
+            inputState.down_down = true;
+          }
+          if (e.key === "ArrowUp") {
+            inputState.up_pressed = true;
+            inputState.up_down = true;
+          }
+          if (e.key === "ArrowLeft") {
+            inputState.left_pressed = true;
+            inputState.left_down = true;
+          }
+          if (e.key === "ArrowRight") {
+            inputState.right_pressed = true;
+            inputState.right_down = true;
+          }
+        });
+
+        document.addEventListener("keyup", (e) => {
+          if (e.key === "a") {
+            inputState.a_down = false;
+          }
+          if (e.key === "s") {
+            inputState.b_down = false;
+          }
+          if (e.key === "ArrowDown") {
+            inputState.down_down = false;
+          }
+          if (e.key === "ArrowUp") {
+            inputState.up_down = false;
+          }
+          if (e.key === "ArrowLeft") {
+            inputState.left_down = false;
+          }
+          if (e.key === "ArrowRight") {
+            inputState.right_down = false;
+          }
+        });
+
         setInterval(() => {
-          exports.loop();
-        }, 1000/30);
+          console.log(inputState);
+          exports.loop(
+            inputState.right_down,
+            inputState.right_pressed,
+            inputState.up_down,
+            inputState.up_pressed,
+            inputState.down_down,
+            inputState.down_pressed,
+            inputState.left_down,
+            inputState.left_pressed,
+            inputState.a_down,
+            inputState.a_pressed,
+            inputState.b_down,
+            inputState.b_pressed
+          );
+          inputState.a_pressed = false;
+          inputState.b_pressed = false;
+          inputState.up_pressed = false;
+          inputState.down_pressed = false;
+          inputState.left_pressed = false;
+          inputState.right_pressed = false;
+        }, 1000 / 30);
 
         const setup = wasm.instance.exports.setup;
         setup();
