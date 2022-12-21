@@ -53,10 +53,8 @@
         exports.setup();
 
         setInterval(() => {
-          console.log("before");
           exports.loop();
-          console.log("after");
-        }, 0.0);
+        }, 1000/30);
 
         const setup = wasm.instance.exports.setup;
         setup();

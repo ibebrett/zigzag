@@ -7,10 +7,34 @@ const Button = @import("api_modules.zig").Button;
 // Javascript link
 extern fn wasmSprite(f32, f32, f32, f32, f32, f32, f32, f32) void;
 
+pub const InputState = struct {
+    left_down: bool = false,
+    left_pressed: bool = false,
+
+    right_down: bool = false,
+    right_pressed: bool = false,
+
+    up_down: bool = false,
+    up_pressed: bool = false,
+
+    down_down: bool = false,
+    down_pressed: bool = false,
+
+    a_down: bool = false,
+    a_pressed: bool = false,
+
+    b_down: bool = false,
+    b_pressed: bool = false,
+
+    d_down: bool = false,
+    d_pressed: bool = false,
+};
+
 pub const ApiWASM = struct {
     camera_x: f32 = 0,
     camera_y: f32 = 0,
     map_data: [4 * 256 * 256]u8 = [_]u8{0} ** (4 * 256 * 256),
+    input_state: InputState = .{},
 
     pub fn init() ApiWASM {
         return .{};
@@ -38,9 +62,8 @@ pub const ApiWASM = struct {
     }
 
     pub fn camera(self: *ApiWASM, camera_x: f32, camera_y: f32) void {
-        _ = self;
-        _ = camera_x;
-        _ = camera_y;
+        self.camera_x = camera_x;
+        self.camera_y = camera_y;
     }
 
     pub fn map(self: ApiWASM, celx: u32, cely: u32, sx: f32, sy: f32, celw: u32, celh: u32, layer: u32) void {
@@ -93,9 +116,9 @@ pub const ApiWASM = struct {
     }
 
     // Internal Use
-    //pub fn update_input(self: *ApiWASM, input_state: InputState) void {
-    //    _ = input_state;
-    //}
+    pub fn update_input(self: *ApiWASM, input_state: InputState) void {
+        self.input_state = input_state;
+    }
 
     fn transform(self: ApiWASM, x: *f32, y: *f32) void {
         x.* = x.* - self.camera_x;
