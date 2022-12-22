@@ -21,7 +21,7 @@ Aside from zig (obviously), you need both SDL2 and SDL_Image development release
 ### WASM
 
 1. `zig build wasm`
-2. Serve the conents of the root of this directory with a webserver. If you like python you can run ```python -m http.server` and go to http://localhost:8000.
+2. Serve the conents of the root of this directory with a webserver. If you like python you can run `python -m http.server` and go to http://localhost:8000.
 
 ## Usage
 
