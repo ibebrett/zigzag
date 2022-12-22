@@ -47,7 +47,7 @@
               },
             },
           };
-          fetch("main_wasm.wasm")
+          fetch("zig-out/lib/wasm.wasm")
             .then((response) => response.arrayBuffer())
             .then((bytes) => WebAssembly.instantiate(bytes, importObject))
             .then((results) => {
