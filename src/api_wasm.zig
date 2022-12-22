@@ -6,6 +6,7 @@ const Button = @import("api_modules.zig").Button;
 
 // Javascript link
 extern fn wasmSprite(f32, f32, f32, f32, f32, f32, f32, f32) void;
+extern fn wasmMusic(u32, u32, u32) void;
 
 pub const InputState = struct {
     left_down: bool = false,
@@ -35,6 +36,7 @@ pub const ApiWASM = struct {
     camera_y: f32 = 0,
     map_data: [4 * 256 * 256]u8 = [_]u8{0} ** (4 * 256 * 256),
     input_state: InputState = .{},
+    playing_music: bool = false,
 
     pub fn init() ApiWASM {
         return .{};
@@ -47,6 +49,11 @@ pub const ApiWASM = struct {
         var ty = y;
         self.transform(&tx, &ty);
         wasmSprite(tx, ty, w, h, src_x, src_y, 8, 8);
+    }
+
+    pub fn music(self: *ApiWASM, audio: u32, fadems: u32, channelMask: u32) void {
+        self.playing_music = true;
+        wasmMusic(audio, fadems, channelMask);
     }
 
     pub fn btnp(self: ApiWASM, button: Button) bool {
