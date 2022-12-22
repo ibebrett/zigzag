@@ -4,6 +4,8 @@ An extremely minimal game system for zig, inspired by another project: https://g
 
 ![Screenshot](docs/zigzag.gif)
 
+Try the [wasm demo](https://ibebrett.github.com/zigzag).
+
 ## Building
 
 You can right now either build using SDL (on windows (more platforms coming)), or WASM.
