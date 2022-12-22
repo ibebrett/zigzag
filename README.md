@@ -15,17 +15,12 @@ Aside from zig (obviously), you need both SDL2 and SDL_Image development release
 1. Download the sdl development release SDL2-devel-2.26.1-VC and unzip in the main directory of this repo.
 2. Download the sdl2 image development release SDL2_image-devel-2.6.2-VC and unzip in the main directory of this repo.
 3. Copy the dlls SDL2.dll and SDL2_image.dll from the unzipped folders (the 64 bit versions) from above to the build directory (zig-out/bin)
-
-4. Make sure that in `src/api.zig` Api is set to `sdl.ApiSDL`.
-   `pub const Api = sdl.ApiSDL;`
-5. Run zig build
+4. Run `zig build`
 
 ### WASM
 
-1. Make sure that in `src/api.zig` Api is set to `sdl.ApiWASM`.
-   `pub const Api = sdl.ApiWASM;`
-2. `zig build-lib src/main_wasm.zig -target wasm32-freestanding -dynamic -OReleaseFast`
-3. Serve the conents of the root of this directory with a webserver. If you like python you can run `python -m http.server' and go to http://localhost:8000.
+1. `zig build-lib src/main_wasm.zig -target wasm32-freestanding -dynamic -OReleaseFast`
+2. Serve the conents of the root of this directory with a webserver. If you like python you can run ```python -m http.server` and go to http://localhost:8000.
 
 ## Usage
 
