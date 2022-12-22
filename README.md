@@ -4,7 +4,7 @@ An extremely minimal game system for zig, inspired by another project: https://g
 
 ![Screenshot](docs/zigzag.gif)
 
-Try the [wasm demo](https://ibebrett.github.com/zigzag).
+Try the [wasm demo](https://ibebrett.github.io/zigzag).
 
 ## Building
 
