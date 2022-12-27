@@ -6,6 +6,10 @@ An extremely minimal game system for zig, inspired by another project: https://g
 
 Try the [wasm demo](https://ibebrett.github.io/zigzag).
 
+## Pico 8
+
+The initial goal is to build an api compatible with pico8 (a proven api), by sticking as closely as is reasonable to the [pico8 api](https://iiviigames.github.io/pico8-api/). Over time we will probably evolve and diverge, but for now lets keep it simple.
+
 ## Building
 
 You can right now either build using SDL (on windows (more platforms coming)), or WASM.
@@ -46,6 +50,78 @@ You can read the state of them with `btnp` to see if the button has been pressed
 ### Full API Docs
 
 coming soon...
+
+### API Progress (PICO 8 equivalent)
+
+Pico8 api descriptions copied from: [iiviigames.github.io](https://iiviigames.github.io/pico8-api/)
+
+#### Graphics
+
+##### Implemented
+
+```
+camera([x, y]) -- set camera position
+spr(n, x, y, [w, h], [flip_x], [flip_y]) -- draw sprite (without flip_x and flip_y currently)
+```
+
+##### Not Yet Implemented
+
+```
+circ(x, y, r, [col]) -- draw circle
+circfill(x, y, r, [col]) -- draw filled circle
+clip([x, y, w, h]) -- set screen clipping region
+cls([col]) -- clear screen; col = clear color
+color(col) -- set default color
+cursor(x, y) -- set cursor and CR/LF margin position
+fget(n, [f]) -- get values of sprite flags
+fillp(mask) -- set fill pattern for circ, circfill, rect, rectfill, pset, and line
+flip() -- flip screen back buffer (30fps)
+fset(n, [f], v) -- set values of sprite flags
+line(x0, y0, x1, y1, [col]) -- draw line
+oval(x0, y0, x1, y1, [col]) -- draws an ellipse inside of a bounding rectangle
+ovalfill(x0, y0, x1, y1, [col]) -- draws a colored ellipse
+pal(c0, c1, [p]) -- swaps col 0 to col 1; p = 0 = draw palette; p = 1 = screen palette
+palt(col, t) -- set transparency for colour to t (bool)
+pget(x, y) -- get pixel colour
+print(str, [x, y, [col]]) -- print string
+pset(x, y, [col]) -- set pixel colour
+rect(x0, y0, x1, y1, [col]) -- draw rectangle
+rectfill(x0, y0, x1, y1, [col]) -- draw filled rectangle
+sget(x, y) -- get spritesheet pixel colour
+sset(x, y, [col]) -- set spritesheet pixel colour
+sspr(sx, sy, sw, sh, dx, dy, [dw, dh], [flip_x], [flip_y]) -- draw texture from spritesheet
+tline(x0, y0, x1, y1, mx, my, [mdx], [mdy]) -- Draws a textured line between two points, sampling the map for data
+```
+
+#### Input
+
+##### Implemented
+
+```
+btn([i, [p]]) -- get button i state for player p (missing player parameter)
+btnp([i, [p]]) -- true when the button was not pressed the last frame; (missing player parameter) 
+```
+
+##### Not Yet Implemented
+
+#### Map
+
+##### Implemented
+
+```
+map(cel_x, cel_y, sx, sy, cel_w, cel_h, [layer]) -- draw map; layers from flags; sprite 0 is empty
+mget(x, y) -- get map value
+mset(x, y, v) -- set map value
+```
+
+#### Audio
+
+##### Not Yet Implemented
+
+```
+music([n, [fade_len, [channel_mask]]]) -- play music; n = -1: stop
+sfx(n, [channel, [offset]]) -- play sfx; n = -1: stop in channel; n = -2: release loop in channel
+```
 
 ## Current Status
 
