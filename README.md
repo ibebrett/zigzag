@@ -53,15 +53,20 @@ coming soon...
 
 ### API Progress (PICO 8 equivalent)
 
+Pico8 api descriptions copied from: [iiviigames.github.io](https://iiviigames.github.io/pico8-api/)
+
 #### Graphics
 
 ##### Implemented
 
+```
 camera([x, y]) -- set camera position
 spr(n, x, y, [w, h], [flip_x], [flip_y]) -- draw sprite (without flip_x and flip_y currently)
+```
 
 ##### Not Yet Implemented
 
+```
 circ(x, y, r, [col]) -- draw circle
 circfill(x, y, r, [col]) -- draw filled circle
 clip([x, y, w, h]) -- set screen clipping region
@@ -86,13 +91,16 @@ sget(x, y) -- get spritesheet pixel colour
 sset(x, y, [col]) -- set spritesheet pixel colour
 sspr(sx, sy, sw, sh, dx, dy, [dw, dh], [flip_x], [flip_y]) -- draw texture from spritesheet
 tline(x0, y0, x1, y1, mx, my, [mdx], [mdy]) -- Draws a textured line between two points, sampling the map for data
+```
 
 #### Input
 
 ##### Implemented
 
+```
 btn([i, [p]]) -- get button i state for player p
 btnp([i, [p]]) -- true when the button was not pressed the last frame; delays 4 frames after button held for 15 frames
+```
 
 ##### Not Yet Implemented
 
@@ -100,16 +108,20 @@ btnp([i, [p]]) -- true when the button was not pressed the last frame; delays 4 
 
 ##### Implemented
 
+```
 map(cel_x, cel_y, sx, sy, cel_w, cel_h, [layer]) -- draw map; layers from flags; sprite 0 is empty
 mget(x, y) -- get map value
 mset(x, y, v) -- set map value
+```
 
 #### Audio
 
 ##### Not Yet Implemented
 
+```
 music([n, [fade_len, [channel_mask]]]) -- play music; n = -1: stop
 sfx(n, [channel, [offset]]) -- play sfx; n = -1: stop in channel; n = -2: release loop in channel
+```
 
 ## Current Status
 
