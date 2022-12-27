@@ -98,8 +98,8 @@ tline(x0, y0, x1, y1, mx, my, [mdx], [mdy]) -- Draws a textured line between two
 ##### Implemented
 
 ```
-btn([i, [p]]) -- get button i state for player p
-btnp([i, [p]]) -- true when the button was not pressed the last frame; delays 4 frames after button held for 15 frames
+btn([i, [p]]) -- get button i state for player p (missing player parameter)
+btnp([i, [p]]) -- true when the button was not pressed the last frame; (missing player parameter) 
 ```
 
 ##### Not Yet Implemented
