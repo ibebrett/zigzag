@@ -125,6 +125,11 @@ pub const ApiWASM = struct {
         self.map_data[offset + x + 256 * y] = tile;
     }
 
+    pub fn mget(self: *ApiWASM, x: u32, y: u32, layer: u32) u8 {
+        const offset = 256 * 256 * layer;
+        return self.map_data[offset + x + 256 * y];
+    }
+
     // Internal Use
     pub fn update_input(self: *ApiWASM, input_state: InputState) void {
         self.input_state = input_state;
