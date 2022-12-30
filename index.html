@@ -174,8 +174,10 @@
           inputState.right_pressed = false;
 
           const after = Date.now();
-          const wait = Math.max(0, 16.0 - (after - before));
-          //console.log(wait);
+
+          // Attempt to loop at 30fps.
+          // TODO: Come up with a better scheme for this.
+          const wait = Math.max(0, 33.0 - (after - before));
           setTimeout(mainLoop, wait);
         };
 
