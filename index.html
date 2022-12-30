@@ -8,6 +8,19 @@
     <p>The buttons are a, s and the arrow keys.</p>
     <canvas id="canvas" width="512" height="512"></canvas>
     <script>
+      class FPSCounter {
+        init() {
+          this.last = 0;
+        }
+
+        tick() {
+          const now = Date.now();
+          const diff = now - this.last;
+          this.last = now;
+          return diff;
+        }
+      }
+
       const newInputState = () => ({
         a_pressed: false,
         b_pressed: false,
@@ -43,6 +56,7 @@
               memory: new WebAssembly.Memory({ initial: 256 }),
               consoleLog: () => {},
               wasmSprite: (dx, dy, dw, dh, sx, sy, sw, sh) => {
+                // Don't draw the image if its off screen.
                 ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
               },
             },
@@ -128,10 +142,15 @@
         const setup = wasm.instance.exports.setup;
         setup();
 
-        setInterval(() => {
+        const fps = new FPSCounter();
+
+        const mainLoop = () => {
+          console.log("tick", fps.tick());
+          const before = Date.now();
           // clear the screen
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+          // Let's figure out how long it takes to run loop.
           exports.loop(
             inputState.right_down,
             inputState.right_pressed,
@@ -146,13 +165,21 @@
             inputState.b_down,
             inputState.b_pressed
           );
+
           inputState.a_pressed = false;
           inputState.b_pressed = false;
           inputState.up_pressed = false;
           inputState.down_pressed = false;
           inputState.left_pressed = false;
           inputState.right_pressed = false;
-        }, 1000 / 30);
+
+          const after = Date.now();
+          const wait = Math.max(0, 16.0 - (after - before));
+          //console.log(wait);
+          setTimeout(mainLoop, wait);
+        };
+
+        mainLoop();
       })();
     </script>
   </body>

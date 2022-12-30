@@ -4,12 +4,31 @@ const ApiTypes = @import("api_modules.zig");
 
 const RndGen = std.rand.DefaultPrng;
 
-const Object = struct { x: f32 = 0, y: f32 = 0 };
+const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
 
 const NUM_OBJECTS = 5000;
 
 fn makeObject() Object {
-    return Object{ .x = 0.0, .y = 0.0 };
+    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = true };
+}
+
+fn pointInBox(x: f32, y: f32, bx: f32, by: f32, bw: f32, bh: f32) bool {
+    return (x >= bx and x <= bx + bw and y >= by and y <= by + bh);
+}
+
+fn boxIntersect(x1: f32, y1: f32, w1: f32, h1: f32, x2: f32, y2: f32, w2: f32, h2: f32) bool {
+    // Basically check if any of our points are within
+    return (
+    // box1 points in box2
+        pointInBox(x1, y1, x2, y2, w2, h2) or
+        pointInBox(x1 + w1, y1, x2, y2, w2, h2) or
+        pointInBox(x1, y1 + h1, x2, y2, w2, h2) or
+        pointInBox(x1 + w1, y1 + h1, x2, y2, w2, h2) or
+        // box2 points in box1
+        pointInBox(x2, y2, x1, y1, w1, h1) or
+        pointInBox(x2 + w2, y2, x1, y1, w1, h1) or
+        pointInBox(x2, y2 + h2, x1, y1, w1, h1) or
+        pointInBox(x2 + w2, y2 + h2, x1, y1, w1, h1));
 }
 
 pub const Game = struct {
@@ -44,8 +63,9 @@ pub const Game = struct {
 
         var objects = [_]Object{makeObject()} ** NUM_OBJECTS;
 
+        // Place the birds on the grass.
         for (objects) |*o| {
-            // Only place x and y on
+            // Don't place the birds on obstacles.
             while (true) {
                 var o_x = rnd.random().int(u32) % 100;
                 var o_y = rnd.random().int(u32) % 100;
@@ -70,6 +90,7 @@ pub const Game = struct {
 
         const tile = api.mget(tx, ty, 0); // == 48; // only grass is walkable.
 
+        // Only grass is walkable.
         return tile == 48;
     }
 
@@ -100,8 +121,6 @@ pub const Game = struct {
         if (dy.* < 0.0 and !self.walkableTile(api, x + dx.*, y + dy.*)) {
             dy.* = 0.0;
         }
-
-        // Detect against any objects.
     }
 
     pub fn update(self: *Game, api: *Api.Api) void {
@@ -120,9 +139,6 @@ pub const Game = struct {
         if (api.btn(ApiTypes.Button.UP)) {
             dy = -1.0;
         }
-        if (api.btnp(ApiTypes.Button.A)) {
-            self.sprite = (self.sprite + 1) % 16;
-        }
 
         // Our game objects are really 7x7 so they can fit into the cracks of the tile.
         self.worldMove(api, self.x, self.y, 7.0, 7.0, &dx, &dy);
@@ -131,11 +147,25 @@ pub const Game = struct {
         self.y += dy;
 
         for (self.objects) |*o| {
-            var o_dx = (self.rnd.random().float(f32) - 0.5) * 4.0;
-            var o_dy = (self.rnd.random().float(f32) - 0.5) * 4.0;
+            var o_dx = (self.rnd.random().float(f32) - 0.5) * 2.0;
+            var o_dy = (self.rnd.random().float(f32) - 0.5) * 2.0;
+
+            var target_x = self.x - o.*.x;
+            var target_y = self.y - o.*.y;
+
+            const scale = 1.0 / (std.math.sqrt(target_x * target_x + target_y * target_y) + 0.0001);
+
+            o_dx += target_x * scale;
+            o_dy += target_y * scale;
+
             self.worldMove(api, o.*.x, o.*.y, 7.0, 7.0, &o_dx, &o_dy);
             o.*.x += o_dx;
             o.*.y += o_dy;
+
+            if (boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
+                o.*.spr = 5;
+                o.*.draw = false;
+            }
         }
 
         self.randomize_count = (self.randomize_count + 1) % 20;
@@ -170,7 +200,9 @@ pub const Game = struct {
         api.map(0, 0, 0, 0, 256, 256, 0);
 
         for (self.objects) |o| {
-            api.spr(4, o.x, o.y, 8.0, 8.0);
+            if (o.draw) {
+                api.spr(o.spr, o.x, o.y, 8.0, 8.0);
+            }
         }
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
 

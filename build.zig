@@ -12,7 +12,7 @@ pub fn build(b: *std.build.Builder) void {
 
         // Standard release options allow the person running `zig build` to select
         // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
-        const exe = b.addExecutable("game1", "src/main.zig");
+        const exe = b.addExecutable("game1", "src/main_sdl.zig");
 
         exe.addLibraryPath("SDL2-devel-2.26.1-VC/SDL2-2.26.1/lib/x64");
         exe.addIncludePath("SDL2-devel-2.26.1-VC/SDL2-2.26.1/include");
