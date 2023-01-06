@@ -8,6 +8,7 @@
     <p>The buttons are a, s and the arrow keys.</p>
     <canvas id="canvas" width="512" height="512"></canvas>
     <div id="music"></div>
+    <div id="sfx"></div>
     <script>
       class FPSCounter {
         init() {
@@ -38,6 +39,7 @@
         ctx.scale(4, 4);
 
         const music = document.getElementById("music");
+        const sfx = document.getElementById("sfx");
 
         const img = await new Promise((resolve) => {
           const img = new Image(); // Create new img element
@@ -64,16 +66,49 @@
               },
               wasmMusic: (track, fadems, channelMask) => {
                 console.log("Trying to play audio file with fadems and channelmask", track, fadems,channelMask);
-                //TODO actually match audio to file
-                const channel = "music-" + channelMask;
+                if(track == -1) {
+                  while (music.firstChild) {
+                    music.removeChild(music.firstChild);
+                  }
+                  return;
+                }
+
+                const channel = "music";
                 const existingTrack = document.getElementById(channel);
                 if(existingTrack) {
                   existingTrack.remove();
                 }
-                //TODO replace generic track with coded track, securely.
                 const newTrack = new Audio("assets/"+track+".mp3");
                 const newChannel = music.appendChild(newTrack);
                 newChannel.id = channel;
+                newTrack.play();
+                newTrack.loop = true;
+
+                //Fade-in volume if appropriate
+                if (fadems != 0) {
+                  newTrack.volume = 0;
+                  var fAudio = setInterval(function(){
+                    const newVolume = newTrack.volume + 0.1;
+                    if(newVolume >= 1) {
+                      newTrack.volume = 1;
+                      clearInterval(fAudio);
+                    } else {
+                      newTrack.volume = newVolume;
+                    }
+                  },fadems/10);
+                }
+              },
+              wasmSfx: (track) => {
+                console.log("Trying to play sfx ", track);
+                const channel = "sfx" + track; 
+                const existingTrack = document.getElementById(channel);
+                if(existingTrack) {
+                  existingTrack.remove();
+                }
+                const newTrack = new Audio("assets/"+track+".wav");
+                const newChannel = music.appendChild(newTrack);
+                newChannel.id = channel;
+                newTrack.loop = false;
                 newTrack.play();
               }
             },

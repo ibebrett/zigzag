@@ -117,11 +117,12 @@ mset(x, y, v) -- set map value
 
 #### Audio
 
-##### Not Yet Implemented
+
+##### Partially Implemented
 
 ```
-music([n, [fade_len, [channel_mask]]]) -- play music; n = -1: stop
-sfx(n, [channel, [offset]]) -- play sfx; n = -1: stop in channel; n = -2: release loop in channel
+sfx(n) -- WASM only: play sfx N; sfx files are expected to be in .wav format in the resources folder, named numerically, (0.wav, 1.wav, etc). SFX files will play once, and if the same SFX file is called before the first completes, it will terminate the first preemptively.
+music([n, [fade_len, [channel_mask]]]) -- WASM only: play "n" pattern music; n = -1: stop. fade_len will fade-in the music over fade_len milliseconds. channel_mask is not currently used. Music files are expected to be in mp3 format in the resources folder, named numerically (0.mp3, 1.mp3, etc).
 ```
 
 ## Current Status

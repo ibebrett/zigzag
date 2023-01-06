@@ -6,7 +6,7 @@ const RndGen = std.rand.DefaultPrng;
 
 const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
 
-const NUM_OBJECTS = 5000;
+const NUM_OBJECTS = 50;
 
 fn makeObject() Object {
     return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = true };
@@ -140,6 +140,11 @@ pub const Game = struct {
             dy = -1.0;
         }
 
+        if (api.btnp(ApiTypes.Button.A)) {
+            //The user needs to interact with the game before the browser will allow any music to play;
+            api.music(0, 5000, 0);
+        }
+
         // Our game objects are really 7x7 so they can fit into the cracks of the tile.
         self.worldMove(api, self.x, self.y, 7.0, 7.0, &dx, &dy);
 
@@ -164,7 +169,10 @@ pub const Game = struct {
 
             if (boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
                 o.*.spr = 5;
-                o.*.draw = false;
+                if(o.*.draw) {
+                    api.sfx(0);
+                    o.*.draw = false;
+                }
             }
         }
 
