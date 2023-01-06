@@ -1,6 +1,7 @@
 const std = @import("std");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_image = @cImport(@cInclude("SDL_image.h"));
+const sdl_mixer = @cImport(@cInclude("SDL_mixer.h"));
 
 const Api = @import("api_sdl.zig");
 const Game = @import("game.zig").Game;
@@ -46,6 +47,8 @@ pub fn main() !void {
     var image_renderer = @ptrCast(?*sdl_image.SDL_Renderer, renderer);
     const img = @ptrCast(?*sdl.SDL_Texture, sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
     defer sdl.SDL_DestroyTexture(img);
+
+    _ = sdl_mixer.Mix_OpenAudio(22050,sdl_mixer.AUDIO_S16SYS,2,640);
 
     var api = Api.ApiSDL.init(renderer.?, img.?);
     var game = Game.init(&api);
