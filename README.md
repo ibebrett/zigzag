@@ -18,9 +18,10 @@ You can right now either build using SDL (on windows (more platforms coming)), o
 
 Aside from zig (obviously), you need both SDL2 and SDL_Image development releases.
 
-1. Download the sdl development release SDL2-devel-2.26.1-VC and unzip in the main directory of this repo.
-2. Download the sdl2 image development release SDL2_image-devel-2.6.2-VC and unzip in the main directory of this repo.
-3. Run `zig build -Dnative=true`
+1. Download the sdl development release SDL2-devel-2.26.1-VC and unzip in the main directory of this repo. [releases](https://github.com/libsdl-org/SDL/releases/tag/release-2.26.1)
+2. Download the sdl2 image development release SDL2_image-devel-2.6.2-VC and unzip in the main directory of this repo. [releases](https://github.com/libsdl-org/SDL_image/releases/tag/release-2.6.2)
+3. Run `zig build -Dnative=true` this builds a native executable that can be found in  the `zig-out/bin` directory
+4. Run `./game1.exe` and let the fun begin.
 
 ### WASM
 
