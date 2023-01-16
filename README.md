@@ -20,8 +20,9 @@ Aside from zig (obviously), you need both SDL2 and SDL_Image development release
 
 1. Download the sdl development release SDL2-devel-2.26.1-VC and unzip in the main directory of this repo. [releases](https://github.com/libsdl-org/SDL/releases/tag/release-2.26.1)
 2. Download the sdl2 image development release SDL2_image-devel-2.6.2-VC and unzip in the main directory of this repo. [releases](https://github.com/libsdl-org/SDL_image/releases/tag/release-2.6.2)
-3. Run `zig build -Dnative=true` this builds a native executable that can be found in  the `zig-out/bin` directory
-4. Run `./game1.exe` and let the fun begin.
+3. Download the sdl2 mixer development release SDL2_mixer-devel-2.6.2-VC and unzip in the main directory of this repo. [releases](https://github.com/libsdl-org/SDL_mixer/releases/tag/release-2.6.2)
+4. Run `zig build -Dnative=true` this builds a native executable that can be found in  the `zig-out/bin` directory
+5. Run `./game1.exe` and let the fun begin.
 
 ### WASM
 

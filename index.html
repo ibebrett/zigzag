@@ -73,7 +73,7 @@
                   return;
                 }
 
-                const channel = "music";
+                const channel = "music-" + track;
                 const existingTrack = document.getElementById(channel);
                 if(existingTrack) {
                   existingTrack.remove();
@@ -100,13 +100,13 @@
               },
               wasmSfx: (track) => {
                 console.log("Trying to play sfx ", track);
-                const channel = "sfx" + track; 
+                const channel = "sfx-" + track; 
                 const existingTrack = document.getElementById(channel);
                 if(existingTrack) {
                   existingTrack.remove();
                 }
                 const newTrack = new Audio("assets/"+track+".wav");
-                const newChannel = music.appendChild(newTrack);
+                const newChannel = sfx.appendChild(newTrack);
                 newChannel.id = channel;
                 newTrack.loop = false;
                 newTrack.play();

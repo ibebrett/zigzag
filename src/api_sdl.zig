@@ -69,6 +69,9 @@ pub const ApiSDL = struct {
 
     pub fn sfx(self: *ApiSDL, audio: u32) void { 
         self.playing_sfx = true;
+
+        var sound = sdl_mixer.Mix_LoadWAV("0.wav");
+        _ = sdl_mixer.Mix_PlayChannel(-1, sound, 0);
         
         //Not implemented yet
         _ = audio;
