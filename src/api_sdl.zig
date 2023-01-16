@@ -1,6 +1,7 @@
 const std = @import("std");
 const sdl = @cImport(@cInclude("SDL.h"));
 const sdl_image = @cImport(@cInclude("SDL_image.h"));
+const sdl_mixer = @cImport(@cInclude("SDL_mixer.h"));
 
 const math = std.math;
 
@@ -36,6 +37,8 @@ pub const ApiSDL = struct {
     camera_x: f32 = 0.0,
     camera_y: f32 = 0.0,
     map_data: [4 * 256 * 256]u8 = [_]u8{0} ** (4 * 256 * 256),
+    playing_music: bool = false,
+    playing_sfx: bool = false,
 
     pub fn init(renderer: *sdl.SDL_Renderer, texture: *sdl.SDL_Texture) ApiSDL {
         return .{ .renderer = renderer, .texture = texture };
@@ -51,6 +54,27 @@ pub const ApiSDL = struct {
 
         const dest: sdl.SDL_Rect = .{ .w = @floatToInt(i32, w), .h = @floatToInt(i32, h), .x = @floatToInt(i32, tx), .y = @floatToInt(i32, ty) };
         _ = sdl.SDL_RenderCopy(self.renderer, self.texture, &src, &dest);
+    }
+
+    pub fn music(self: *ApiSDL, audio: u32, fadems: u32, channelMask: u32) void {
+        self.playing_music = true;
+        var mus = sdl_mixer.Mix_LoadMUS("0.mp3");
+        _ = sdl_mixer.Mix_PlayMusic(mus, 1);
+
+        //Not implemented yet
+        _ = audio;
+        _ = fadems;
+        _ = channelMask;
+    }
+
+    pub fn sfx(self: *ApiSDL, audio: u32) void { 
+        self.playing_sfx = true;
+
+        var sound = sdl_mixer.Mix_LoadWAV("0.wav");
+        _ = sdl_mixer.Mix_PlayChannel(-1, sound, 0);
+        
+        //Not implemented yet
+        _ = audio;
     }
 
     pub fn btnp(self: ApiSDL, button: Button) bool {

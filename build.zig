@@ -9,6 +9,8 @@ pub fn build(b: *std.build.Builder) void {
 
     if (build_native) {
         const installSprites = b.addInstallFile(.{ .path = "assets/sprites.png" }, "bin/sprites.png");
+        const installMusic = b.addInstallFile(.{ .path = "assets/0.mp3" }, "bin/0.mp3");
+        const installSfx = b.addInstallFile(.{ .path = "assets/0.wav" }, "bin/0.wav");
 
         // Standard release options allow the person running `zig build` to select
         // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
@@ -18,21 +20,29 @@ pub fn build(b: *std.build.Builder) void {
         exe.addIncludePath("SDL2-devel-2.26.1-VC/SDL2-2.26.1/include");
         exe.addLibraryPath("SDL2_image-devel-2.6.2-VC/SDL2_image-2.6.2/lib/x64");
         exe.addIncludePath("SDL2_image-devel-2.6.2-VC/SDL2_image-2.6.2/include");
+        exe.addLibraryPath("SDL2_mixer-devel-2.6.2-VC/SDL2_mixer-2.6.2/lib/x64");
+        exe.addIncludePath("SDL2_mixer-devel-2.6.2-VC/SDL2_mixer-2.6.2/include");
 
+        const installSDLMixerDLL = b.addInstallFile(.{ .path = "SDL2_mixer-devel-2.6.2-VC/SDL2_mixer-2.6.2/lib/x64/SDL2_mixer.dll" }, "bin/SDL2_mixer.dll");
         const installSDLImageDLL = b.addInstallFile(.{ .path = "SDL2_image-devel-2.6.2-VC/SDL2_image-2.6.2/lib/x64/SDL2_image.dll" }, "bin/SDL2_image.dll");
         const installSDLDLL = b.addInstallFile(.{ .path = "SDL2-devel-2.26.1-VC/SDL2-2.26.1/lib/x64/SDL2.dll" }, "bin/SDL2.dll");
 
         exe.linkLibC();
         exe.linkSystemLibraryName("SDL2");
         exe.linkSystemLibraryName("SDL2_image");
+        exe.linkSystemLibraryName("SDL2_mixer");
 
         exe.setTarget(target);
         exe.setBuildMode(mode);
 
         exe.install();
 
+
+        exe.step.dependOn(&installSDLMixerDLL.step);
         exe.step.dependOn(&installSDLImageDLL.step);
         exe.step.dependOn(&installSDLDLL.step);
+        exe.step.dependOn(&installMusic.step);
+        exe.step.dependOn(&installSfx.step);
         exe.step.dependOn(&installSprites.step);
     }
 

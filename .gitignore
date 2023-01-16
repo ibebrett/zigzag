@@ -9,8 +9,7 @@
 # Cheers!
 # -andrewrk
 
-SDL2_image-devel-2.6.2-VC/
-SDL2-devel-2.26.1-VC/
+SDL2*/
 zig-cache/
 zig-out/
 /release/
