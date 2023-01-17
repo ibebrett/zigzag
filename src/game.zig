@@ -2,11 +2,27 @@ const std = @import("std");
 const Api = @import("api.zig");
 const ApiTypes = @import("api_modules.zig");
 
+
 const RndGen = std.rand.DefaultPrng;
 
 const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
 
+const Bullet = struct { 
+    x: f32 = 0, 
+    y: f32 = 0, 
+    spr: u32 = 66, 
+    dir: ApiTypes.Direction = ApiTypes.Direction.RIGHT, 
+    spd: f32 = 2.0,
+    draw: bool = false,
+};
+
 const NUM_OBJECTS = 5000;
+const NUM_BULLETS = 100;
+const BULLET_SPEED = 2.0;
+
+fn make_bullet() Bullet {
+    return Bullet{};
+}
 
 fn makeObject() Object {
     return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = true };
@@ -40,6 +56,10 @@ pub const Game = struct {
     randomize_count: u32 = 0,
     random_seed: u32 = 0,
     objects: [NUM_OBJECTS]Object,
+    bullets: [NUM_BULLETS]Bullet = [_]Bullet{make_bullet()} ** NUM_BULLETS,
+    last_bullet_idx: u32 = 0,
+
+
 
     pub fn init(api: *Api.Api) Game {
         var rnd = RndGen.init(0);
@@ -123,20 +143,101 @@ pub const Game = struct {
         }
     }
 
+    fn get_free_bullet_idx(self: *Game) u32 {
+        var idx: u32 = 0;
+
+        for (self.bullets) |b| {
+            if (b.draw == false) {
+                return idx;
+            } else if (idx + 1 < NUM_BULLETS) {
+                idx += 1;
+            } 
+        }
+
+        if(self.last_bullet_idx + 1 < 100) {
+            self.last_bullet_idx += 1;
+        } else {
+            self.last_bullet_idx = 0;
+        }
+        return self.last_bullet_idx;
+    }
+
+    fn bullet_collision(bullet: Bullet) bool {
+        if (bullet.draw){
+            return false;
+        }
+        return false;
+    }
+
+    fn update_bullets(self: *Game) void {
+        //TODO: figure out how to copy an array.
+        for (self.bullets) |*b, index| {
+            if (bullet_collision(self.bullets[index])) {
+                b.*.draw = false;
+                continue;
+            }
+
+            if (b.*.dir == ApiTypes.Direction.RIGHT) {
+                b.*.x += BULLET_SPEED;
+            } else if (b.*.dir == ApiTypes.Direction.LEFT) {
+                b.*.x -= BULLET_SPEED;
+            } else if (b.*.dir == ApiTypes.Direction.UP) {
+                b.*.y -= BULLET_SPEED;
+            } else if (b.*.dir == ApiTypes.Direction.DOWN) {
+                b.*.y += BULLET_SPEED;
+            }
+
+        }
+    }
+
     pub fn update(self: *Game, api: *Api.Api) void {
         var dx: f32 = 0;
         var dy: f32 = 0;
 
+        self.update_bullets();
+
         if (api.btn(ApiTypes.Button.RIGHT)) {
+            if (api.btn(ApiTypes.Button.A)) {
+                self.bullets[self.get_free_bullet_idx()] = Bullet{
+                    .x = self.x + BULLET_SPEED,
+                    .y = self.y,
+                    .dir = ApiTypes.Direction.RIGHT,
+                    .draw = true
+                };
+            }
             dx = 1.0;
         }
         if (api.btn(ApiTypes.Button.LEFT)) {
+            if (api.btn(ApiTypes.Button.A)) {
+                self.bullets[self.get_free_bullet_idx()] = Bullet{
+                    .x = self.x - BULLET_SPEED,
+                    .y = self.y,
+                    .dir = ApiTypes.Direction.LEFT,
+                    .draw = true
+                };
+            }
             dx = -1.0;
         }
         if (api.btn(ApiTypes.Button.DOWN)) {
+            if (api.btn(ApiTypes.Button.A)) {
+                self.bullets[self.get_free_bullet_idx()] = Bullet{
+                    .x = self.x,
+                    .y = self.y + BULLET_SPEED,
+                    .dir = ApiTypes.Direction.DOWN,
+                    .draw = true
+                };
+            }
             dy = 1.0;
         }
         if (api.btn(ApiTypes.Button.UP)) {
+            if (api.btn(ApiTypes.Button.A)) {
+                self.bullets[self.get_free_bullet_idx()] = Bullet{
+                    .x = self.x,
+                    .y = self.y - BULLET_SPEED,
+                    .dir = ApiTypes.Direction.UP,
+                    .draw = true
+                };
+            }
             dy = -1.0;
         }
 
@@ -204,6 +305,13 @@ pub const Game = struct {
                 api.spr(o.spr, o.x, o.y, 8.0, 8.0);
             }
         }
+
+        for (self.bullets) |b| {
+            if(b.draw) {
+                api.spr(b.spr, b.x, b.y, 8.0, 8.0);
+            }
+        }
+
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
