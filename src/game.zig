@@ -7,7 +7,7 @@ const pow = std.math.pow;
 
 const RndGen = std.rand.DefaultPrng;
 
-const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
+const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5 };
 
 const Bullet = struct { 
     x: f32 = 0,
@@ -35,6 +35,7 @@ const BULLET_SPEED = 2.0;
 fn make_bullet() Bullet {
     return Bullet{};
 }
+const MAX_HEALTH_SPRITE = 128;
 
 const NUM_LEVELS = 10;
 fn makeObject(draw: bool) Object {
@@ -76,6 +77,8 @@ pub const Game = struct {
     last_bullet_idx: u32 = 0,
 
 
+    player_health: u32 = 100,
+    player_hurt: bool = false,
     xp: [NUM_XP]xpSprite,
     xpcounter: u32 = 0,
     level: u32=1,
@@ -321,7 +324,21 @@ pub const Game = struct {
                         break;
                     }
                 }
-            }
+                //An enemy has collided with the player! 
+                //The player is damaged.
+                
+                    self.player_health -= 1;
+                    self.player_hurt = true;
+                    // api.sfx(0);
+
+                    //Push enemy away in attempt to not immediately die
+                    o.*.x -= 3 * o_dx;
+                    o.*.y -= 3 * o_dy;
+                    //Also hurt the enemy
+                    o.*.health -= 1;
+            }else {
+                    self.player_hurt = false;
+                }
         }
 
         for (self.xp) |*xp| {
@@ -331,9 +348,20 @@ pub const Game = struct {
                 if(self.xpcounter >= 10*self.level and self.level < NUM_LEVELS){
                     self.xpcounter = 0;
                     self.level += 1;
+                    self.player_health = 100;
                 }
             }
+            
+
+
+            //Kill the enemy
+            // o.*.spr = 5;
+            // if(o.*.draw) {
+            //     api.sfx(0);
+            //     o.*.draw = false;
+            // }
         }
+
 
         self.randomize_count = (self.randomize_count + 1) % 20;
 
@@ -400,6 +428,9 @@ pub const Game = struct {
         api.spr(114,self.x - 14 ,self.y + 52, 8.0, 8.0);
         api.spr(96 + self.level/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
         api.spr(96 + self.level % 10,self.x - -2, self.y + 52, 8.0, 8.0);
+
+        var healthSpriteOffset = 6 - self.player_health / 15;
+        api.spr(MAX_HEALTH_SPRITE + healthSpriteOffset, self.x, self.y - 5, 8.0, 8.0);
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
     }

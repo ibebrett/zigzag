@@ -18,3 +18,4 @@ zig-out/
 /build/
 /build-*/
 /docgen_tmp/
+/SDL2*/
