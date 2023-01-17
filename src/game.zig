@@ -81,7 +81,6 @@ fn boxIntersect(x1: f32, y1: f32, w1: f32, h1: f32, x2: f32, y2: f32, w2: f32, h
 const AIUpdate = struct {
     dx: f32,
     dy: f32,
-
 };
 
 fn enemyAI(player_x: f32, player_y: f32, enemy: Enemy) AIUpdate {
@@ -93,8 +92,13 @@ fn enemyAI(player_x: f32, player_y: f32, enemy: Enemy) AIUpdate {
     };
 }
 
+const PlayerAnimation = struct {
+    forward: bool = true,
+    walk_cycle: u32 = 0, // 0 - 16 standing, 16 - 32 - left, 32 - 48 right.
+};
 
 pub const Game = struct {
+    player_animation: PlayerAnimation = .{},
     x: f32 = 30.0,
     y: f32 = 30.0,
     sprite: u32 = 2,
@@ -221,9 +225,7 @@ pub const Game = struct {
 
     // }
 
-
-
-    fn moveSpeedEnemy() void { // 
+    fn moveSpeedEnemy() void { //
 
     }
 
@@ -348,6 +350,20 @@ pub const Game = struct {
         
         // Our game objects are really 7x7 so they can fit into the cracks of the tile.
         self.worldMove(api, self.x, self.y, 7.0, 7.0, &dx, &dy);
+
+        // Update the player animation state.
+
+        if (dx != 0 or dy != 0) {
+            self.player_animation.walk_cycle = 1 + (self.player_animation.walk_cycle + 1) % 48;
+        } else {
+            self.player_animation.walk_cycle = 0;
+        }
+
+        if (dy > 0.0) {
+            self.player_animation.forward = true;
+        } else if (dy < 0.0) {
+            self.player_animation.forward = false;
+        }
 
         self.x += dx;
         self.y += dy;
@@ -496,5 +512,43 @@ pub const Game = struct {
         }
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
+        self.drawRyan(api);
+    }
+
+    fn drawRyan(self: Game, api: *Api.Api) void {
+        const walkdiff: u32 = switch (self.player_animation.walk_cycle) {
+            0 => 1,
+            1...24 => 0,
+            else => 2,
+        };
+
+        const leftarmdiff: u32 = switch (self.player_animation.walk_cycle) {
+            0 => 1,
+            1...24 => 1,
+            else => 0,
+        };
+
+        const rightarmdiff: u32 = switch (self.player_animation.walk_cycle) {
+            0 => 0,
+            1...24 => 0,
+            else => 1,
+        };
+        const forwarddiff: u32 = switch (self.player_animation.forward) {
+            true => 0,
+            false => 1,
+        };
+
+        // draw the head.
+        api.spr(50 + forwarddiff, self.x, self.y - 16.0, 8.0, 8.0);
+
+        // The body
+        api.spr(50 + 16, self.x, self.y - 8.0, 8.0, 8.0);
+
+        // The arms.
+        api.spr(48 + 16 + leftarmdiff, self.x - 8.0, self.y - 8.0, 8.0, 8.0);
+        api.spr(52 + 16 + rightarmdiff, self.x + 8.0, self.y - 8.0, 8.0, 8.0);
+
+        // The legs depend on the wlak cycle
+        api.spr(49 + 16 * 2 + walkdiff, self.x, self.y, 8.0, 8.0);
     }
 };
