@@ -22,14 +22,21 @@ const BulletVector = struct {
     dy: f32 = 0,
 };
 //2^14
+const xpSprite = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 38, draw: bool = false };
+
+const xpCount = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 54, draw: bool = false };
+
 const NUM_OBJECTS = 16384;
-const NUM_BULLETS = 5000;
+const NUM_BULLETS = 500;
+
+const NUM_XP=100;
 const BULLET_SPEED = 2.0;
 
 fn make_bullet() Bullet {
     return Bullet{};
 }
 
+const NUM_LEVELS = 10;
 fn makeObject(draw: bool) Object {
     return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
 }
@@ -69,6 +76,9 @@ pub const Game = struct {
     last_bullet_idx: u32 = 0,
 
 
+    xp: [NUM_XP]xpSprite,
+    xpcounter: u32 = 0,
+    level: u32=1,
 
     pub fn init(api: *Api.Api) Game {
         var rnd = RndGen.init(0);
@@ -118,7 +128,9 @@ pub const Game = struct {
             bar.*.y = -8.0;
         }
 
-        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar };
+        var xpsprites = [_]xpSprite{.{}} ** NUM_XP;
+
+        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar, .xp = xpsprites};
     }
 
     pub fn walkableTile(self: Game, api: *Api.Api, x: f32, y: f32) bool {
@@ -298,9 +310,28 @@ pub const Game = struct {
             o.*.x += o_dx;
             o.*.y += o_dy;
 
-            if (boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
+            if (o.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
                 o.*.spr = 5;
                 o.*.draw = false;
+                for(self.xp) |*xp| {
+                    if(xp.*.draw == false){
+                        xp.*.x = o.*.x;
+                        xp.*.y = o.*.y;
+                        xp.*.draw = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (self.xp) |*xp| {
+            if (xp.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, xp.*.x + 2, xp.*.y + 2, 4.0, 4.0)) {
+                xp.*.draw = false;
+                self.xpcounter += 1;
+                if(self.xpcounter >= 10*self.level and self.level < NUM_LEVELS){
+                    self.xpcounter = 0;
+                    self.level += 1;
+                }
             }
         }
 
@@ -354,7 +385,21 @@ pub const Game = struct {
             }
         }
 
+        for (self.xp) |xp| {
+            if (xp.draw) {
+                api.spr(xp.spr, xp.x, xp.y, 8.0, 8.0);
+            }
+        }
+
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
+        api.spr(96 + self.xpcounter/10 % 10,self.x - 8, self.y + 8, 8.0, 8.0);
+        api.spr(96 + self.xpcounter % 10,self.x, self.y + 8, 8.0, 8.0);
+
+        api.spr(112,self.x - 30 ,self.y + 52, 8.0, 8.0);
+        api.spr(113,self.x - 22 ,self.y + 52, 8.0, 8.0);
+        api.spr(114,self.x - 14 ,self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.level/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.level % 10,self.x - -2, self.y + 52, 8.0, 8.0);
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
     }
