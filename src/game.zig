@@ -5,9 +5,13 @@ const ApiTypes = @import("api_modules.zig");
 const pow = std.math.pow;
 const RndGen = std.rand.DefaultPrng;
 
-const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5 };
+const ObjectType = enum {
+    FISH,
+    ROOMBA
+};
+const Object = struct { object_type: ObjectType, x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5 };
 fn makeObject(draw: bool) Object {
-    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
+    return Object{ .object_type = ObjectType.FISH, .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
 }
 
 const Bullet = struct { 
@@ -62,6 +66,22 @@ fn boxIntersect(x1: f32, y1: f32, w1: f32, h1: f32, x2: f32, y2: f32, w2: f32, h
         pointInBox(x2 + w2, y2 + h2, x1, y1, w1, h1));
 }
 
+const AIUpdate = struct {
+    dx: f32,
+    dy: f32,
+
+};
+
+fn enemyAI(player_x: f32, player_y: f32, object: Object) AIUpdate {
+    _ = player_x;
+    _ = player_y;
+    _ = object;
+    return .{
+        .dx = 0.1, .dy = -0.1
+    };
+}
+
+
 pub const Game = struct {
     x: f32 = 30.0,
     y: f32 = 30.0,
@@ -111,6 +131,12 @@ pub const Game = struct {
                 break;
             }
             // Don't place the birds on obstacles.
+            const object_type: ObjectType = switch(rnd.random().int(u32) % 100) {
+                0...50 => ObjectType.FISH,
+                else => ObjectType.ROOMBA
+            };
+            o.*.object_type = object_type;
+
             while (true) {
                 var o_x = rnd.random().int(u32) % 100;
                 var o_y = rnd.random().int(u32) % 100;
@@ -176,6 +202,20 @@ pub const Game = struct {
         if (dy.* < 0.0 and !self.walkableTile(api, x + dx.*, y + dy.*)) {
             dy.* = 0.0;
         }
+    }
+
+    // pub fn updateEnemyAI(obj) void {
+
+    // }
+
+
+
+    fn moveSpeedEnemy() void { // 
+
+    }
+
+    fn circleAttackEnemy() void {
+
     }
 
     fn get_free_bullet_idx(self: *Game) u32 {
@@ -302,20 +342,21 @@ pub const Game = struct {
             self.bowlingball.draw = !self.bowlingball.draw;
         }
         for (self.objects) |*o| {
-            var o_dx = (self.rnd.random().float(f32) - 0.5) * 2.0;
-            var o_dy = (self.rnd.random().float(f32) - 0.5) * 2.0;
+            var info = enemyAI(self.x, self.y, o.*);
+            //info.dx = (self.rnd.random().float(f32) - 0.5) * 4.0;
+            //info.dy = (self.rnd.random().float(f32) - 0.5) * 4.0;
 
-            var target_x = self.x - o.*.x;
-            var target_y = self.y - o.*.y;
+            //var target_x = self.x - 0; //o.*.x;
+            //var target_y = self.y - 0; //o.*.y;
 
-            const scale = 1.0 / (std.math.sqrt(target_x * target_x + target_y * target_y) + 0.0001);
+            //const scale = 1.0 / (std.math.sqrt(target_x * target_x + target_y * target_y) + 0.0001);
 
-            o_dx += target_x * scale;
-            o_dy += target_y * scale;
+            //o_dx += target_x * scale;
+            //o_dy += target_y * scale;
 
-            self.worldMove(api, o.*.x, o.*.y, 7.0, 7.0, &o_dx, &o_dy);
-            o.*.x += o_dx;
-            o.*.y += o_dy;
+            self.worldMove(api, o.*.x, o.*.y, 7.0, 7.0, &info.dx, &info.dy);
+            o.*.x += info.dx;
+            o.*.y += info.dy;
 
             //An enemy has collided with the player! 
             if (o.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
@@ -327,8 +368,8 @@ pub const Game = struct {
                 // api.sfx(0);
 
                 //Push enemy away in attempt to not immediately die
-                o.*.x -= 3 * o_dx;
-                o.*.y -= 3 * o_dy;
+                o.*.x -= 3 * info.dx;
+                o.*.y -= 3 * info.dy;
                 
                 //Also hurt the enemy. If the enemy is dead, spawn XP
                 o.*.health -= 1;
@@ -393,7 +434,11 @@ pub const Game = struct {
 
         for (self.objects) |o| {
             if (o.draw) {
-                api.spr(o.spr, o.x, o.y, 8.0, 8.0);
+                const spr: u32 = switch (o.object_type) {
+                    ObjectType.FISH => 4,
+                    ObjectType.ROOMBA => 8 
+                };
+                api.spr(spr, o.x, o.y, 8.0, 8.0);
             }
         }
 
@@ -409,7 +454,7 @@ pub const Game = struct {
             }
         }
 
-        //Player sprite and score
+        //Player sprite and score 
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
         api.spr(96 + self.xpcounter/10 % 10,self.x - 8, self.y + 8, 8.0, 8.0);
         api.spr(96 + self.xpcounter % 10,self.x, self.y + 8, 8.0, 8.0);
