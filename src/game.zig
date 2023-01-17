@@ -28,7 +28,6 @@ const xpCount = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 54, draw: bool = fal
 
 const NUM_OBJECTS = 16384;
 const NUM_BULLETS = 500;
-
 const NUM_XP=100;
 const BULLET_SPEED = 2.0;
 
@@ -36,8 +35,8 @@ fn make_bullet() Bullet {
     return Bullet{};
 }
 const MAX_HEALTH_SPRITE = 128;
-
 const NUM_LEVELS = 10;
+
 fn makeObject(draw: bool) Object {
     return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
 }
@@ -49,7 +48,7 @@ fn pointInBox(x: f32, y: f32, bx: f32, by: f32, bw: f32, bh: f32) bool {
 fn boxIntersect(x1: f32, y1: f32, w1: f32, h1: f32, x2: f32, y2: f32, w2: f32, h2: f32) bool {
     // Basically check if any of our points are within
     return (
-    // box1 points in box2
+        // box1 points in box2
         pointInBox(x1, y1, x2, y2, w2, h2) or
         pointInBox(x1 + w1, y1, x2, y2, w2, h2) or
         pointInBox(x1, y1 + h1, x2, y2, w2, h2) or
@@ -268,27 +267,30 @@ pub const Game = struct {
 
         self.update_bullets(api);
 
-        if (api.btn(ApiTypes.Button.RIGHT)) {
-            bullet_v.dx += BULLET_SPEED;
-            dx = 1.0;
-        }
-        if (api.btn(ApiTypes.Button.LEFT)) {
-            bullet_v.dx -= BULLET_SPEED;
-            dx = -1.0;
-        }
-        if (api.btn(ApiTypes.Button.DOWN)) {
-            bullet_v.dy += BULLET_SPEED;
-            dy = 1.0;
-        }
-        if (api.btn(ApiTypes.Button.UP)) {
-            bullet_v.dy -= BULLET_SPEED;
-            dy = -1.0;
-        }
-        if (api.btn(ApiTypes.Button.A)){
-            if (bullet_v.dx != 0 or bullet_v.dy != 0){
-                self.fireBullet(bullet_v, self.x, self.y);
+        if(self.player_health > 0) {
+            
+            if (api.btn(ApiTypes.Button.RIGHT)) {
+                bullet_v.dx += BULLET_SPEED;
+                dx = 1.0;
             }
-           
+            if (api.btn(ApiTypes.Button.LEFT)) {
+                bullet_v.dx -= BULLET_SPEED;
+                dx = -1.0;
+            }
+            if (api.btn(ApiTypes.Button.DOWN)) {
+                bullet_v.dy += BULLET_SPEED;
+                dy = 1.0;
+            }
+            if (api.btn(ApiTypes.Button.UP)) {
+                bullet_v.dy -= BULLET_SPEED;
+                dy = -1.0;
+            }
+            if (api.btn(ApiTypes.Button.A)){
+                if (bullet_v.dx != 0 or bullet_v.dy != 0){
+                    self.fireBullet(bullet_v, self.x, self.y);
+                }
+            
+            }
         }
         
         // Our game objects are really 7x7 so they can fit into the cracks of the tile.
@@ -313,32 +315,33 @@ pub const Game = struct {
             o.*.x += o_dx;
             o.*.y += o_dy;
 
+            //An enemy has collided with the player! 
             if (o.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
-                o.*.spr = 5;
-                o.*.draw = false;
-                for(self.xp) |*xp| {
-                    if(xp.*.draw == false){
-                        xp.*.x = o.*.x;
-                        xp.*.y = o.*.y;
-                        xp.*.draw = true;
-                        break;
-                    }
-                }
-                //An enemy has collided with the player! 
                 //The player is damaged.
-                
-                    self.player_health -= 1;
-                    self.player_hurt = true;
-                    // api.sfx(0);
+                self.player_health -= 1;
+                self.player_hurt = true;
+                // api.sfx(0);
 
-                    //Push enemy away in attempt to not immediately die
-                    o.*.x -= 3 * o_dx;
-                    o.*.y -= 3 * o_dy;
-                    //Also hurt the enemy
-                    o.*.health -= 1;
-            }else {
-                    self.player_hurt = false;
-                }
+                //Push enemy away in attempt to not immediately die
+                o.*.x -= 3 * o_dx;
+                o.*.y -= 3 * o_dy;
+                
+                //Also hurt the enemy. If the enemy is dead, spawn XP
+                o.*.health -= 1;
+                if(o.*.health <= 0) {
+                    o.*.draw = false;
+                    for(self.xp) |*xp| {
+                        if(xp.*.draw == false){
+                            xp.*.x = o.*.x;
+                            xp.*.y = o.*.y;
+                            xp.*.draw = true;
+                            break;
+                        }
+                    }
+                }  
+            } else {
+                self.player_hurt = false;
+            }
         }
 
         for (self.xp) |*xp| {
@@ -351,15 +354,6 @@ pub const Game = struct {
                     self.player_health = 100;
                 }
             }
-            
-
-
-            //Kill the enemy
-            // o.*.spr = 5;
-            // if(o.*.draw) {
-            //     api.sfx(0);
-            //     o.*.draw = false;
-            // }
         }
 
 
@@ -426,10 +420,10 @@ pub const Game = struct {
         api.spr(112,self.x - 30 ,self.y + 52, 8.0, 8.0);
         api.spr(113,self.x - 22 ,self.y + 52, 8.0, 8.0);
         api.spr(114,self.x - 14 ,self.y + 52, 8.0, 8.0);
-        api.spr(96 + self.level/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
-        api.spr(96 + self.level % 10,self.x - -2, self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.player_health/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.player_health % 10,self.x - -2, self.y + 52, 8.0, 8.0);
 
-        var healthSpriteOffset = 6 - self.player_health / 15;
+        var healthSpriteOffset = 6 - @floatToInt(u32, @intToFloat(f32,self.player_health) / 100.0 * 6);
         api.spr(MAX_HEALTH_SPRITE + healthSpriteOffset, self.x, self.y - 5, 8.0, 8.0);
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
