@@ -5,13 +5,25 @@ const ApiTypes = @import("api_modules.zig");
 const pow = std.math.pow;
 const RndGen = std.rand.DefaultPrng;
 
-const ObjectType = enum {
+const EnemyType = enum {
     FISH,
-    ROOMBA
+    ROOMBA, 
+    AMOEBA,
 };
-const Object = struct { object_type: ObjectType, x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5 };
-fn makeObject(draw: bool) Object {
-    return Object{ .object_type = ObjectType.FISH, .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
+
+// const Object = struct { object_type: ObjectType, x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
+
+const FishState = struct {
+    saw_bubbles: bool = false
+};
+
+const RoombaState = struct {
+    visible: bool = true
+};
+const Enemy = struct { enemy_type: EnemyType, x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5,
+    fish_state: FishState = .{}, roomba_state: RoombaState = .{}  };
+fn makeEnemy(draw: bool) Enemy {
+    return Enemy{ .enemy_type = EnemyType.FISH, .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
 }
 
 const Bullet = struct { 
@@ -40,7 +52,7 @@ const bowlingball = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 3, draw: bool = 
 //2^14
 // const NUM_OBJECTS = 16384;
 // const NUM_BULLETS = 500;
-const NUM_OBJECTS = 500;
+const NUM_ENEMIES = 500;
 const NUM_BULLETS = 100;
 const NUM_XP=100;
 const BULLET_SPEED = 2.0;
@@ -72,10 +84,10 @@ const AIUpdate = struct {
 
 };
 
-fn enemyAI(player_x: f32, player_y: f32, object: Object) AIUpdate {
+fn enemyAI(player_x: f32, player_y: f32, enemy: Enemy) AIUpdate {
     _ = player_x;
     _ = player_y;
-    _ = object;
+    _ = enemy;
     return .{
         .dx = 0.1, .dy = -0.1
     };
@@ -89,8 +101,8 @@ pub const Game = struct {
     map_offset: u32 = 0,
     rnd: std.rand.DefaultPrng,
     random_seed: u32 = 0,
-    objects: [NUM_OBJECTS]Object,
-    waveBar:[10]Object,
+    enemies: [NUM_ENEMIES]Enemy,
+    waveBar:[10]Enemy,
     frameCount: u32 = 0,
     waveNumber: u32 = 1,
     bullets: [NUM_BULLETS]Bullet = [_]Bullet{make_bullet()} ** NUM_BULLETS,
@@ -122,20 +134,21 @@ pub const Game = struct {
             y = 0;
         }
 
-        var objects = [_]Object{makeObject(false)} ** NUM_OBJECTS;
+        var enemies = [_]Enemy{makeEnemy(false)} ** NUM_ENEMIES;
 
         // Place the birds on the grass.
         const currentWaveTotal = @floatToInt(i64, pow(f64, 2, 10));
-        for (objects) |*o, indx| {
+        for (enemies) |*o, indx| {
             if(indx >= currentWaveTotal){
                 break;
             }
             // Don't place the birds on obstacles.
-            const object_type: ObjectType = switch(rnd.random().int(u32) % 100) {
-                0...50 => ObjectType.FISH,
-                else => ObjectType.ROOMBA
+            const enemy_type: EnemyType = switch(rnd.random().int(u32) % 100) {
+                0...70 => EnemyType.FISH,
+                71...95 => EnemyType.ROOMBA,
+                else => EnemyType.AMOEBA
             };
-            o.*.object_type = object_type;
+            o.*.enemy_type =enemy_type;
 
             while (true) {
                 var o_x = rnd.random().int(u32) % 100;
@@ -149,7 +162,7 @@ pub const Game = struct {
             }
         }
 
-        var waveBar = [_]Object{makeObject(true)} ** 10;
+        var waveBar = [_]Enemy{makeEnemy(true)} ** 10;
         for (waveBar) |*bar, bar_indx| {
             var bar_x = bar_indx;
             bar.*.x = @intToFloat(f32, bar_x) * 8;
@@ -158,7 +171,7 @@ pub const Game = struct {
 
         var xpsprites = [_]xpSprite{.{}} ** NUM_XP;
 
-        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar, .xp = xpsprites, .bowlingball = .{}};
+        return .{ .rnd = rnd, .enemies = enemies, .waveBar = waveBar, .xp = xpsprites, .bowlingball = .{}};
     }
 
     pub fn walkableTile(self: Game, api: *Api.Api, x: f32, y: f32) bool {
@@ -293,7 +306,7 @@ pub const Game = struct {
                 self.waveNumber = 1;
              }
             const currentWaveTotal = @floatToInt(i64, pow(f64, 2, @intToFloat(f64, self.waveNumber + 9)));
-            for (self.objects) |*o, object_idx| {
+            for (self.enemies) |*o, object_idx| {
                 if(object_idx >= currentWaveTotal){
                     break;
                 }
@@ -341,7 +354,7 @@ pub const Game = struct {
         if (self.frameCount % 70 == 0){
             self.bowlingball.draw = !self.bowlingball.draw;
         }
-        for (self.objects) |*o| {
+        for (self.enemies) |*o| {
             var info = enemyAI(self.x, self.y, o.*);
             //info.dx = (self.rnd.random().float(f32) - 0.5) * 4.0;
             //info.dy = (self.rnd.random().float(f32) - 0.5) * 4.0;
@@ -432,11 +445,19 @@ pub const Game = struct {
             }
         }
 
-        for (self.objects) |o| {
+        //draw waveBar
+        for (self.waveBar) |bar| {
+            if (bar.draw) {
+                api.spr(bar.spr, bar.x, bar.y, 8.0, 8.0);
+            }
+        }
+
+        for (self.enemies) |o| {
             if (o.draw) {
-                const spr: u32 = switch (o.object_type) {
-                    ObjectType.FISH => 4,
-                    ObjectType.ROOMBA => 8 
+                const spr: u32 = switch (o.enemy_type) {
+                    EnemyType.FISH => 4,
+                    EnemyType.ROOMBA => 8,
+                    EnemyType.AMOEBA => 11 
                 };
                 api.spr(spr, o.x, o.y, 8.0, 8.0);
             }
