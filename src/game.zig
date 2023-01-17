@@ -26,6 +26,8 @@ const xpSprite = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 38, draw: bool = fa
 
 const xpCount = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 54, draw: bool = false };
 
+const bowlingball = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 3, draw: bool = false };
+
 const NUM_OBJECTS = 16384;
 const NUM_BULLETS = 500;
 const NUM_XP=100;
@@ -81,6 +83,7 @@ pub const Game = struct {
     xp: [NUM_XP]xpSprite,
     xpcounter: u32 = 0,
     level: u32=1,
+    bowlingball:bowlingball,
 
     pub fn init(api: *Api.Api) Game {
         var rnd = RndGen.init(0);
@@ -132,7 +135,7 @@ pub const Game = struct {
 
         var xpsprites = [_]xpSprite{.{}} ** NUM_XP;
 
-        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar, .xp = xpsprites};
+        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar, .xp = xpsprites, .bowlingball = .{}};
     }
 
     pub fn walkableTile(self: Game, api: *Api.Api, x: f32, y: f32) bool {
@@ -298,7 +301,9 @@ pub const Game = struct {
 
         self.x += dx;
         self.y += dy;
-
+        if (self.frameCount % 70 == 0){
+            self.bowlingball.draw = !self.bowlingball.draw;
+        }
         for (self.objects) |*o| {
             var o_dx = (self.rnd.random().float(f32) - 0.5) * 2.0;
             var o_dy = (self.rnd.random().float(f32) - 0.5) * 2.0;
@@ -344,6 +349,23 @@ pub const Game = struct {
             } else {
                 self.player_hurt = false;
             }
+
+            //The enemy has collided with the bowling ball
+            if (o.*.draw and boxIntersect(self.x + 10, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
+                //hurt the enemy. If the enemy is dead, spawn XP
+                o.*.health -= 1;
+                if(o.*.health <= 0) {
+                    o.*.draw = false;
+                    for(self.xp) |*xp| {
+                        if(xp.*.draw == false){
+                            xp.*.x = o.*.x;
+                            xp.*.y = o.*.y;
+                            xp.*.draw = true;
+                            break;
+                        }
+                    }
+                }  
+            }
         }
 
         for (self.xp) |*xp| {
@@ -357,7 +379,6 @@ pub const Game = struct {
                 }
             }
         }
-
 
         self.randomize_count = (self.randomize_count + 1) % 20;
 
@@ -415,18 +436,25 @@ pub const Game = struct {
             }
         }
 
+        //Player sprite and score
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
         api.spr(96 + self.xpcounter/10 % 10,self.x - 8, self.y + 8, 8.0, 8.0);
         api.spr(96 + self.xpcounter % 10,self.x, self.y + 8, 8.0, 8.0);
 
+        //Player level
         api.spr(112,self.x - 30 ,self.y + 52, 8.0, 8.0);
         api.spr(113,self.x - 22 ,self.y + 52, 8.0, 8.0);
         api.spr(114,self.x - 14 ,self.y + 52, 8.0, 8.0);
-        api.spr(96 + self.player_health/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
-        api.spr(96 + self.player_health % 10,self.x - -2, self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.level/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.level % 10,self.x - -2, self.y + 52, 8.0, 8.0);
 
+        //Player health bar
         var healthSpriteOffset = 6 - @floatToInt(u32, @intToFloat(f32,self.player_health) / 100.0 * 6);
         api.spr(MAX_HEALTH_SPRITE + healthSpriteOffset, self.x, self.y - 5, 8.0, 8.0);
+
+        if(self.bowlingball.draw){
+        api.spr(3, self.x + 10, self.y, 8.0, 8.0);
+        }
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
     }
