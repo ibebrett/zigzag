@@ -1,15 +1,17 @@
 const std = @import("std");
 const Api = @import("api.zig");
 const ApiTypes = @import("api_modules.zig");
+const pow = std.math.pow;
 
 const RndGen = std.rand.DefaultPrng;
 
 const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
 
-const NUM_OBJECTS = 5000;
+//2^14
+const NUM_OBJECTS = 16384;
 
-fn makeObject() Object {
-    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = true };
+fn makeObject(draw: bool) Object {
+    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
 }
 
 fn pointInBox(x: f32, y: f32, bx: f32, by: f32, bw: f32, bh: f32) bool {
@@ -40,6 +42,9 @@ pub const Game = struct {
     randomize_count: u32 = 0,
     random_seed: u32 = 0,
     objects: [NUM_OBJECTS]Object,
+    waveBar:[10]Object,
+    frameCount: u32 = 0,
+    waveNumber: u32 = 1,
 
     pub fn init(api: *Api.Api) Game {
         var rnd = RndGen.init(0);
@@ -61,14 +66,19 @@ pub const Game = struct {
             y = 0;
         }
 
-        var objects = [_]Object{makeObject()} ** NUM_OBJECTS;
+        var objects = [_]Object{makeObject(false)} ** NUM_OBJECTS;
 
         // Place the birds on the grass.
-        for (objects) |*o| {
+        const currentWaveTotal = @floatToInt(i64, pow(f64, 2, 10));
+        for (objects) |*o, indx| {
+            if(indx >= currentWaveTotal){
+                break;
+            }
             // Don't place the birds on obstacles.
             while (true) {
                 var o_x = rnd.random().int(u32) % 100;
                 var o_y = rnd.random().int(u32) % 100;
+                o.*.draw = true;
                 if (api.mget(o_x, o_y, 0) == 48) {
                     o.*.x = @intToFloat(f32, o_x) * 8.0 + 0.1;
                     o.*.y = @intToFloat(f32, o_y) * 8.0 + 0.1;
@@ -77,7 +87,14 @@ pub const Game = struct {
             }
         }
 
-        return .{ .rnd = rnd, .objects = objects };
+        var waveBar = [_]Object{makeObject(true)} ** 10;
+        for (waveBar) |*bar, bar_indx| {
+            var bar_x = bar_indx;
+            bar.*.x = @intToFloat(f32, bar_x) * 8;
+            bar.*.y = -8.0;
+        }
+
+        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar };
     }
 
     pub fn walkableTile(self: Game, api: *Api.Api, x: f32, y: f32) bool {
@@ -124,8 +141,37 @@ pub const Game = struct {
     }
 
     pub fn update(self: *Game, api: *Api.Api) void {
+        self.frameCount += 1;
+
         var dx: f32 = 0;
         var dy: f32 = 0;
+        
+        for (self.waveBar) |*bar, indx| {
+            bar.*.x = @intToFloat(f32, indx) *  8 + self.x - 24;
+            bar.*.y = self.y - 70;
+        }
+        //~every 3 seconds
+        if(self.frameCount % 90 == 0){
+           var bar_indx = 10 - (self.frameCount / 90); 
+           self.waveBar[bar_indx].draw = false;
+           if(bar_indx == 0){
+             self.frameCount = 0;
+             self.waveNumber += 1;
+             if(self.waveNumber == 5){
+                self.waveNumber = 1;
+             }
+            const currentWaveTotal = @floatToInt(i64, pow(f64, 2, @intToFloat(f64, self.waveNumber + 9)));
+            for (self.objects) |*o, object_idx| {
+                if(object_idx >= currentWaveTotal){
+                    break;
+                }
+                o.*.draw = true;
+            }
+            for (self.waveBar) |*bar| {
+                bar.*.draw = true;
+            }
+           }
+        }
 
         if (api.btn(ApiTypes.Button.RIGHT)) {
             dx = 1.0;
@@ -198,6 +244,13 @@ pub const Game = struct {
     pub fn draw(self: *Game, api: *Api.Api) void {
         // draw the map
         api.map(0, 0, 0, 0, 256, 256, 0);
+
+        //draw waveBar
+        for (self.waveBar) |bar| {
+            if (bar.draw) {
+                api.spr(bar.spr, bar.x, bar.y, 8.0, 8.0);
+            }
+        }
 
         for (self.objects) |o| {
             if (o.draw) {
