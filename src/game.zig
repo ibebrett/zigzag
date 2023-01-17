@@ -351,7 +351,7 @@ pub const Game = struct {
             }
 
             //The enemy has collided with the bowling ball
-            if (o.*.draw and boxIntersect(self.x + 10, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
+            if (o.*.draw and self.bowlingball.draw and boxIntersect(self.x + 10, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
                 //hurt the enemy. If the enemy is dead, spawn XP
                 o.*.health -= 1;
                 if(o.*.health <= 0) {
