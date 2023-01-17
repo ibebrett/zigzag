@@ -318,7 +318,9 @@ pub const Game = struct {
             //An enemy has collided with the player! 
             if (o.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
                 //The player is damaged.
-                self.player_health -= 1;
+                if(self.player_health > 0) {
+                    self.player_health -= 1;
+                }
                 self.player_hurt = true;
                 // api.sfx(0);
 
