@@ -461,13 +461,6 @@ pub const Game = struct {
             }
         }
 
-        //draw waveBar
-        for (self.waveBar) |bar| {
-            if (bar.draw) {
-                api.spr(bar.spr, bar.x, bar.y, 8.0, 8.0);
-            }
-        }
-
         for (self.enemies) |o| {
             if (o.draw) {
                 const spr: u32 = switch (o.enemy_type) {
@@ -492,9 +485,8 @@ pub const Game = struct {
         }
 
         //Player sprite and score 
-        api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
-        api.spr(96 + self.xpcounter/10 % 10,self.x - 8, self.y + 8, 8.0, 8.0);
-        api.spr(96 + self.xpcounter % 10,self.x, self.y + 8, 8.0, 8.0);
+        api.spr(96 + self.xpcounter/10 % 10,self.x - 4, self.y + 11, 8.0, 8.0);
+        api.spr(96 + self.xpcounter % 10,self.x + 4, self.y + 11, 8.0, 8.0);
 
         //Player level
         api.spr(112,self.x - 30 ,self.y + 52, 8.0, 8.0);
@@ -505,7 +497,7 @@ pub const Game = struct {
 
         //Player health bar
         var healthSpriteOffset = 6 - @floatToInt(u32, @intToFloat(f32,self.player_health) / 100.0 * 6);
-        api.spr(MAX_HEALTH_SPRITE + healthSpriteOffset, self.x, self.y - 5, 8.0, 8.0);
+        api.spr(MAX_HEALTH_SPRITE + healthSpriteOffset, self.x, self.y + 8, 8.0, 8.0);
 
         if(self.bowlingball.draw){
         api.spr(3, self.x + 10, self.y, 8.0, 8.0);
