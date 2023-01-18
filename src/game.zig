@@ -1,38 +1,47 @@
 const std = @import("std");
 const Api = @import("api.zig");
 const ApiTypes = @import("api_modules.zig");
+
 const pow = std.math.pow;
-
-
-
 const RndGen = std.rand.DefaultPrng;
 
-const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
+const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5 };
+fn makeObject(draw: bool) Object {
+    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
+}
 
 const Bullet = struct { 
     x: f32 = 0,
     y: f32 = 0,
     vector: BulletVector = BulletVector{},
-    spr: u32 = 66,
+    spr: u32 = 36,
     draw: bool = false,
 };
-
 const BulletVector = struct {
     dx: f32 = 0,
     dy: f32 = 0,
 };
-//2^14
-const NUM_OBJECTS = 16384;
-const NUM_BULLETS = 5000;
-const BULLET_SPEED = 2.0;
-
 fn make_bullet() Bullet {
     return Bullet{};
 }
 
-fn makeObject(draw: bool) Object {
-    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
-}
+const xpSprite = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 38, draw: bool = false };
+
+const xpCount = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 54, draw: bool = false };
+
+const bowlingball = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 3, draw: bool = false };
+
+
+//These numbers are way too large
+//2^14
+// const NUM_OBJECTS = 16384;
+// const NUM_BULLETS = 500;
+const NUM_OBJECTS = 500;
+const NUM_BULLETS = 100;
+const NUM_XP=100;
+const BULLET_SPEED = 2.0;
+const MAX_HEALTH_SPRITE = 128;
+const NUM_LEVELS = 10;
 
 fn pointInBox(x: f32, y: f32, bx: f32, by: f32, bw: f32, bh: f32) bool {
     return (x >= bx and x <= bx + bw and y >= by and y <= by + bh);
@@ -41,7 +50,7 @@ fn pointInBox(x: f32, y: f32, bx: f32, by: f32, bw: f32, bh: f32) bool {
 fn boxIntersect(x1: f32, y1: f32, w1: f32, h1: f32, x2: f32, y2: f32, w2: f32, h2: f32) bool {
     // Basically check if any of our points are within
     return (
-    // box1 points in box2
+        // box1 points in box2
         pointInBox(x1, y1, x2, y2, w2, h2) or
         pointInBox(x1 + w1, y1, x2, y2, w2, h2) or
         pointInBox(x1, y1 + h1, x2, y2, w2, h2) or
@@ -59,7 +68,6 @@ pub const Game = struct {
     sprite: u32 = 2,
     map_offset: u32 = 0,
     rnd: std.rand.DefaultPrng,
-    randomize_count: u32 = 0,
     random_seed: u32 = 0,
     objects: [NUM_OBJECTS]Object,
     waveBar:[10]Object,
@@ -67,8 +75,12 @@ pub const Game = struct {
     waveNumber: u32 = 1,
     bullets: [NUM_BULLETS]Bullet = [_]Bullet{make_bullet()} ** NUM_BULLETS,
     last_bullet_idx: u32 = 0,
-
-
+    player_health: u32 = 100,
+    player_hurt: bool = false,
+    xp: [NUM_XP]xpSprite,
+    xpcounter: u32 = 0,
+    level: u32=1,
+    bowlingball:bowlingball,
 
     pub fn init(api: *Api.Api) Game {
         var rnd = RndGen.init(0);
@@ -118,7 +130,9 @@ pub const Game = struct {
             bar.*.y = -8.0;
         }
 
-        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar };
+        var xpsprites = [_]xpSprite{.{}} ** NUM_XP;
+
+        return .{ .rnd = rnd, .objects = objects, .waveBar = waveBar, .xp = xpsprites, .bowlingball = .{}};
     }
 
     pub fn walkableTile(self: Game, api: *Api.Api, x: f32, y: f32) bool {
@@ -253,27 +267,30 @@ pub const Game = struct {
 
         self.update_bullets(api);
 
-        if (api.btn(ApiTypes.Button.RIGHT)) {
-            bullet_v.dx += BULLET_SPEED;
-            dx = 1.0;
-        }
-        if (api.btn(ApiTypes.Button.LEFT)) {
-            bullet_v.dx -= BULLET_SPEED;
-            dx = -1.0;
-        }
-        if (api.btn(ApiTypes.Button.DOWN)) {
-            bullet_v.dy += BULLET_SPEED;
-            dy = 1.0;
-        }
-        if (api.btn(ApiTypes.Button.UP)) {
-            bullet_v.dy -= BULLET_SPEED;
-            dy = -1.0;
-        }
-        if (api.btn(ApiTypes.Button.A)){
-            if (bullet_v.dx != 0 or bullet_v.dy != 0){
-                self.fireBullet(bullet_v, self.x, self.y);
+        if(self.player_health > 0) {
+            
+            if (api.btn(ApiTypes.Button.RIGHT)) {
+                bullet_v.dx += BULLET_SPEED;
+                dx = 1.0;
             }
-           
+            if (api.btn(ApiTypes.Button.LEFT)) {
+                bullet_v.dx -= BULLET_SPEED;
+                dx = -1.0;
+            }
+            if (api.btn(ApiTypes.Button.DOWN)) {
+                bullet_v.dy += BULLET_SPEED;
+                dy = 1.0;
+            }
+            if (api.btn(ApiTypes.Button.UP)) {
+                bullet_v.dy -= BULLET_SPEED;
+                dy = -1.0;
+            }
+            if (api.btn(ApiTypes.Button.A)){
+                if (bullet_v.dx != 0 or bullet_v.dy != 0){
+                    self.fireBullet(bullet_v, self.x, self.y);
+                }
+            
+            }
         }
         
         // Our game objects are really 7x7 so they can fit into the cracks of the tile.
@@ -281,7 +298,9 @@ pub const Game = struct {
 
         self.x += dx;
         self.y += dy;
-
+        if (self.frameCount % 70 == 0){
+            self.bowlingball.draw = !self.bowlingball.draw;
+        }
         for (self.objects) |*o| {
             var o_dx = (self.rnd.random().float(f32) - 0.5) * 2.0;
             var o_dy = (self.rnd.random().float(f32) - 0.5) * 2.0;
@@ -298,35 +317,65 @@ pub const Game = struct {
             o.*.x += o_dx;
             o.*.y += o_dy;
 
-            if (boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
-                o.*.spr = 5;
-                o.*.draw = false;
+            //An enemy has collided with the player! 
+            if (o.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
+                //The player is damaged.
+                if(self.player_health > 0) {
+                    self.player_health -= 1;
+                }
+                self.player_hurt = true;
+                // api.sfx(0);
+
+                //Push enemy away in attempt to not immediately die
+                o.*.x -= 3 * o_dx;
+                o.*.y -= 3 * o_dy;
+                
+                //Also hurt the enemy. If the enemy is dead, spawn XP
+                o.*.health -= 1;
+                if(o.*.health <= 0) {
+                    o.*.draw = false;
+                    for(self.xp) |*xp| {
+                        if(xp.*.draw == false){
+                            xp.*.x = o.*.x;
+                            xp.*.y = o.*.y;
+                            xp.*.draw = true;
+                            break;
+                        }
+                    }
+                }  
+            } else {
+                self.player_hurt = false;
+            }
+
+            //The enemy has collided with the bowling ball
+            if (o.*.draw and self.bowlingball.draw and boxIntersect(self.x + 10, self.y, 8.0, 8.0, o.*.x, o.*.y, 8.0, 8.0)) {
+                //hurt the enemy. If the enemy is dead, spawn XP
+                o.*.health -= 1;
+                if(o.*.health <= 0) {
+                    o.*.draw = false;
+                    for(self.xp) |*xp| {
+                        if(xp.*.draw == false){
+                            xp.*.x = o.*.x;
+                            xp.*.y = o.*.y;
+                            xp.*.draw = true;
+                            break;
+                        }
+                    }
+                }  
             }
         }
 
-        self.randomize_count = (self.randomize_count + 1) % 20;
-
-        // Randomize.
-
-        //if (self.randomize_count == 0) {
-        //    self.random_seed = (self.random_seed + 1) % 3;
-        //    var rnd = RndGen.init(self.random_seed);
-
-        //    var x: u32 = 0;
-        //    var y: u32 = 0;
-        //    while (x < 256) {
-        //        while (y < 256) {
-        //            if (rnd.random().int(u8) % 10 == 0) {
-        //                api.mset(x, y, 38 + rnd.random().int(u8) % 4, 1);
-        //            } else {
-        //                api.mset(x, y, 0, 1);
-        //            }
-        //            y += 1;
-        //        }
-        //        x += 1;
-        //        y = 0;
-        //    }
-        //}
+        for (self.xp) |*xp| {
+            if (xp.*.draw and boxIntersect(self.x, self.y, 8.0, 8.0, xp.*.x + 2, xp.*.y + 2, 4.0, 4.0)) {
+                xp.*.draw = false;
+                self.xpcounter += 1;
+                if(self.xpcounter >= 10*self.level and self.level < NUM_LEVELS){
+                    self.xpcounter = 0;
+                    self.level += 1;
+                    self.player_health = 100;
+                }
+            }
+        }
 
         api.camera(self.x - 64 - 4, self.y - 64 - 4);
     }
@@ -354,7 +403,31 @@ pub const Game = struct {
             }
         }
 
+        for (self.xp) |xp| {
+            if (xp.draw) {
+                api.spr(xp.spr, xp.x, xp.y, 8.0, 8.0);
+            }
+        }
+
+        //Player sprite and score
         api.spr(self.sprite, self.x, self.y, 8.0, 8.0);
+        api.spr(96 + self.xpcounter/10 % 10,self.x - 8, self.y + 8, 8.0, 8.0);
+        api.spr(96 + self.xpcounter % 10,self.x, self.y + 8, 8.0, 8.0);
+
+        //Player level
+        api.spr(112,self.x - 30 ,self.y + 52, 8.0, 8.0);
+        api.spr(113,self.x - 22 ,self.y + 52, 8.0, 8.0);
+        api.spr(114,self.x - 14 ,self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.level/10 % 10,self.x - 6, self.y + 52, 8.0, 8.0);
+        api.spr(96 + self.level % 10,self.x - -2, self.y + 52, 8.0, 8.0);
+
+        //Player health bar
+        var healthSpriteOffset = 6 - @floatToInt(u32, @intToFloat(f32,self.player_health) / 100.0 * 6);
+        api.spr(MAX_HEALTH_SPRITE + healthSpriteOffset, self.x, self.y - 5, 8.0, 8.0);
+
+        if(self.bowlingball.draw){
+        api.spr(3, self.x + 10, self.y, 8.0, 8.0);
+        }
 
         //api.map(0, 0, 0, 0, 256, 256, 1);
     }
