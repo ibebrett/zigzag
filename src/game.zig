@@ -21,15 +21,19 @@ const BulletVector = struct {
     dx: f32 = 0,
     dy: f32 = 0,
 };
-//2^14
+
 const xpSprite = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 38, draw: bool = false };
 
 const xpCount = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 54, draw: bool = false };
 
 const bowlingball = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 3, draw: bool = false };
 
-const NUM_OBJECTS = 16384;
-const NUM_BULLETS = 500;
+//These numbers are way too large
+//2^14
+// const NUM_OBJECTS = 16384;
+// const NUM_BULLETS = 500;
+const NUM_OBJECTS = 500;
+const NUM_BULLETS = 100;
 const NUM_XP=100;
 const BULLET_SPEED = 2.0;
 
