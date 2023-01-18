@@ -10,17 +10,20 @@ const RndGen = std.rand.DefaultPrng;
 const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true };
 
 const Bullet = struct { 
-    x: f32 = 0, 
-    y: f32 = 0, 
-    spr: u32 = 66, 
-    dir: ApiTypes.Direction = ApiTypes.Direction.RIGHT, 
-    spd: f32 = 2.0,
+    x: f32 = 0,
+    y: f32 = 0,
+    vector: BulletVector = BulletVector{},
+    spr: u32 = 66,
     draw: bool = false,
 };
 
+const BulletVector = struct {
+    dx: f32 = 0,
+    dy: f32 = 0,
+};
 //2^14
 const NUM_OBJECTS = 16384;
-const NUM_BULLETS = 100;
+const NUM_BULLETS = 5000;
 const BULLET_SPEED = 2.0;
 
 fn make_bullet() Bullet {
@@ -166,10 +169,11 @@ pub const Game = struct {
 
         for (self.bullets) |b| {
             if (b.draw == false) {
+                self.last_bullet_idx = 0;
                 return idx;
             } else if (idx + 1 < NUM_BULLETS) {
                 idx += 1;
-            } 
+            }
         }
 
         if(self.last_bullet_idx + 1 < 100) {
@@ -180,35 +184,41 @@ pub const Game = struct {
         return self.last_bullet_idx;
     }
 
-    fn bullet_collision(bullet: Bullet) bool {
-        if (bullet.draw){
-            return false;
+    fn bullet_collision(self: *Game, bullet: Bullet, api: *Api.Api) bool {
+        if (!self.walkableTile(api, bullet.x + bullet.vector.dx, bullet.y + bullet.vector.dy)){
+            return true;
         }
         return false;
     }
 
-    fn update_bullets(self: *Game) void {
+    fn update_bullets(self: *Game, api: *Api.Api) void {
         //TODO: figure out how to copy an array.
         for (self.bullets) |*b, index| {
-            if (bullet_collision(self.bullets[index])) {
+            if (!b.draw) {
+                continue;
+            }
+
+            if (self.bullet_collision(self.bullets[index], api)) {
                 b.*.draw = false;
                 continue;
             }
 
-            if (b.*.dir == ApiTypes.Direction.RIGHT) {
-                b.*.x += BULLET_SPEED;
-            } else if (b.*.dir == ApiTypes.Direction.LEFT) {
-                b.*.x -= BULLET_SPEED;
-            } else if (b.*.dir == ApiTypes.Direction.UP) {
-                b.*.y -= BULLET_SPEED;
-            } else if (b.*.dir == ApiTypes.Direction.DOWN) {
-                b.*.y += BULLET_SPEED;
-            }
-
+            b.*.x += b.*.vector.dx;
+            b.*.y += b.*.vector.dy;
         }
     }
 
+    fn fireBullet(self: *Game, bulletVector: BulletVector, x: f32, y: f32) void {
+        self.bullets[self.get_free_bullet_idx()] = Bullet{
+            .x = x + bulletVector.dx,
+            .y = y + bulletVector.dy,
+            .vector = bulletVector,
+            .draw = true
+        };
+    }
+
     pub fn update(self: *Game, api: *Api.Api) void {
+        var bullet_v: BulletVector = BulletVector{};
         self.frameCount += 1;
 
         var dx: f32 = 0;
@@ -241,53 +251,31 @@ pub const Game = struct {
            }
         }
 
-        self.update_bullets();
+        self.update_bullets(api);
 
         if (api.btn(ApiTypes.Button.RIGHT)) {
-            if (api.btn(ApiTypes.Button.A)) {
-                self.bullets[self.get_free_bullet_idx()] = Bullet{
-                    .x = self.x + BULLET_SPEED,
-                    .y = self.y,
-                    .dir = ApiTypes.Direction.RIGHT,
-                    .draw = true
-                };
-            }
+            bullet_v.dx += BULLET_SPEED;
             dx = 1.0;
         }
         if (api.btn(ApiTypes.Button.LEFT)) {
-            if (api.btn(ApiTypes.Button.A)) {
-                self.bullets[self.get_free_bullet_idx()] = Bullet{
-                    .x = self.x - BULLET_SPEED,
-                    .y = self.y,
-                    .dir = ApiTypes.Direction.LEFT,
-                    .draw = true
-                };
-            }
+            bullet_v.dx -= BULLET_SPEED;
             dx = -1.0;
         }
         if (api.btn(ApiTypes.Button.DOWN)) {
-            if (api.btn(ApiTypes.Button.A)) {
-                self.bullets[self.get_free_bullet_idx()] = Bullet{
-                    .x = self.x,
-                    .y = self.y + BULLET_SPEED,
-                    .dir = ApiTypes.Direction.DOWN,
-                    .draw = true
-                };
-            }
+            bullet_v.dy += BULLET_SPEED;
             dy = 1.0;
         }
         if (api.btn(ApiTypes.Button.UP)) {
-            if (api.btn(ApiTypes.Button.A)) {
-                self.bullets[self.get_free_bullet_idx()] = Bullet{
-                    .x = self.x,
-                    .y = self.y - BULLET_SPEED,
-                    .dir = ApiTypes.Direction.UP,
-                    .draw = true
-                };
-            }
+            bullet_v.dy -= BULLET_SPEED;
             dy = -1.0;
         }
-
+        if (api.btn(ApiTypes.Button.A)){
+            if (bullet_v.dx != 0 or bullet_v.dy != 0){
+                self.fireBullet(bullet_v, self.x, self.y);
+            }
+           
+        }
+        
         // Our game objects are really 7x7 so they can fit into the cracks of the tile.
         self.worldMove(api, self.x, self.y, 7.0, 7.0, &dx, &dy);
 
