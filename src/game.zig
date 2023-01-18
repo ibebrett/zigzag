@@ -13,7 +13,7 @@ const Bullet = struct {
     x: f32 = 0,
     y: f32 = 0,
     vector: BulletVector = BulletVector{},
-    spr: u32 = 66,
+    spr: u32 = 36,
     draw: bool = false,
 };
 
