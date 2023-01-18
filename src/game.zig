@@ -1,13 +1,14 @@
 const std = @import("std");
 const Api = @import("api.zig");
 const ApiTypes = @import("api_modules.zig");
+
 const pow = std.math.pow;
-
-
-
 const RndGen = std.rand.DefaultPrng;
 
 const Object = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 4, draw: bool = true, health: u32 = 5 };
+fn makeObject(draw: bool) Object {
+    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
+}
 
 const Bullet = struct { 
     x: f32 = 0,
@@ -16,17 +17,20 @@ const Bullet = struct {
     spr: u32 = 36,
     draw: bool = false,
 };
-
 const BulletVector = struct {
     dx: f32 = 0,
     dy: f32 = 0,
 };
+fn make_bullet() Bullet {
+    return Bullet{};
+}
 
 const xpSprite = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 38, draw: bool = false };
 
 const xpCount = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 54, draw: bool = false };
 
 const bowlingball = struct { x: f32 = 0, y: f32 = 0, spr: u32 = 3, draw: bool = false };
+
 
 //These numbers are way too large
 //2^14
@@ -36,16 +40,8 @@ const NUM_OBJECTS = 500;
 const NUM_BULLETS = 100;
 const NUM_XP=100;
 const BULLET_SPEED = 2.0;
-
-fn make_bullet() Bullet {
-    return Bullet{};
-}
 const MAX_HEALTH_SPRITE = 128;
 const NUM_LEVELS = 10;
-
-fn makeObject(draw: bool) Object {
-    return Object{ .x = 0.0, .y = 0.0, .spr = 4, .draw = draw };
-}
 
 fn pointInBox(x: f32, y: f32, bx: f32, by: f32, bw: f32, bh: f32) bool {
     return (x >= bx and x <= bx + bw and y >= by and y <= by + bh);
@@ -72,7 +68,6 @@ pub const Game = struct {
     sprite: u32 = 2,
     map_offset: u32 = 0,
     rnd: std.rand.DefaultPrng,
-    randomize_count: u32 = 0,
     random_seed: u32 = 0,
     objects: [NUM_OBJECTS]Object,
     waveBar:[10]Object,
@@ -80,8 +75,6 @@ pub const Game = struct {
     waveNumber: u32 = 1,
     bullets: [NUM_BULLETS]Bullet = [_]Bullet{make_bullet()} ** NUM_BULLETS,
     last_bullet_idx: u32 = 0,
-
-
     player_health: u32 = 100,
     player_hurt: bool = false,
     xp: [NUM_XP]xpSprite,
@@ -383,30 +376,6 @@ pub const Game = struct {
                 }
             }
         }
-
-        self.randomize_count = (self.randomize_count + 1) % 20;
-
-        // Randomize.
-
-        //if (self.randomize_count == 0) {
-        //    self.random_seed = (self.random_seed + 1) % 3;
-        //    var rnd = RndGen.init(self.random_seed);
-
-        //    var x: u32 = 0;
-        //    var y: u32 = 0;
-        //    while (x < 256) {
-        //        while (y < 256) {
-        //            if (rnd.random().int(u8) % 10 == 0) {
-        //                api.mset(x, y, 38 + rnd.random().int(u8) % 4, 1);
-        //            } else {
-        //                api.mset(x, y, 0, 1);
-        //            }
-        //            y += 1;
-        //        }
-        //        x += 1;
-        //        y = 0;
-        //    }
-        //}
 
         api.camera(self.x - 64 - 4, self.y - 64 - 4);
     }
