@@ -64,14 +64,14 @@ pub const Game = struct {
         var objects = [_]Object{makeObject()} ** NUM_OBJECTS;
 
         // Place the birds on the grass.
-        for (objects) |*o| {
+        for (&objects) |*o| {
             // Don't place the birds on obstacles.
             while (true) {
-                var o_x = rnd.random().int(u32) % 100;
-                var o_y = rnd.random().int(u32) % 100;
+                const o_x = rnd.random().int(u32) % 100;
+                const o_y = rnd.random().int(u32) % 100;
                 if (api.mget(o_x, o_y, 0) == 48) {
-                    o.*.x = @intToFloat(f32, o_x) * 8.0 + 0.1;
-                    o.*.y = @intToFloat(f32, o_y) * 8.0 + 0.1;
+                    o.*.x = @as(f32, @floatFromInt(o_x)) * 8.0 + 0.1;
+                    o.*.y = @as(f32, @floatFromInt(o_y)) * 8.0 + 0.1;
                     break;
                 }
             }
@@ -85,8 +85,8 @@ pub const Game = struct {
         if (x < 0 or x >= 256 * 8 or y < 0 or y > 256 * 8) {
             return false;
         }
-        const tx = @floatToInt(u32, std.math.floor(x / 8.0));
-        const ty = @floatToInt(u32, std.math.floor(y / 8.0));
+        const tx: u32 = @intFromFloat(std.math.floor(x / 8.0));
+        const ty: u32 = @intFromFloat(std.math.floor(y / 8.0));
 
         const tile = api.mget(tx, ty, 0); // == 48; // only grass is walkable.
 
@@ -146,12 +146,12 @@ pub const Game = struct {
         self.x += dx;
         self.y += dy;
 
-        for (self.objects) |*o| {
+        for (&self.objects) |*o| {
             var o_dx = (self.rnd.random().float(f32) - 0.5) * 2.0;
             var o_dy = (self.rnd.random().float(f32) - 0.5) * 2.0;
 
-            var target_x = self.x - o.*.x;
-            var target_y = self.y - o.*.y;
+            const target_x = self.x - o.*.x;
+            const target_y = self.y - o.*.y;
 
             const scale = 1.0 / (std.math.sqrt(target_x * target_x + target_y * target_y) + 0.0001);
 

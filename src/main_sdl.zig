@@ -20,7 +20,8 @@ const FPSCounter = struct {
     pub fn update(self: *FPSCounter) FPSResult {
         const curr = sdl.SDL_GetTicks();
         const diff = curr - self.last_ticks;
-        const freq = 1.0 / (0.000000001 + (@intToFloat(f32, diff) / 1000.0));
+        const freq = 1.0 / (0.000000001 + (@as(f32, @floatFromInt(diff)) / 1000.0));
+        self.last_ticks = curr;
         return .{ .freq = freq, .period = diff };
     }
 };
@@ -35,7 +36,7 @@ pub fn main() !void {
     assert(win != null);
     defer sdl.SDL_DestroyWindow(win);
 
-    var renderer = sdl.SDL_CreateRenderer(win, -1, sdl.SDL_RENDERER_ACCELERATED);
+    const renderer = sdl.SDL_CreateRenderer(win, -1, sdl.SDL_RENDERER_ACCELERATED);
     assert(renderer != null);
     defer sdl.SDL_DestroyRenderer(renderer);
 
@@ -43,8 +44,8 @@ pub fn main() !void {
     _ = sdl.SDL_RenderSetLogicalSize(renderer, 128, 128);
     _ = sdl.SDL_SetHint(sdl.SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 
-    var image_renderer = @ptrCast(?*sdl_image.SDL_Renderer, renderer);
-    const img = @ptrCast(?*sdl.SDL_Texture, sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
+    const image_renderer: ?*sdl_image.SDL_Renderer = @ptrCast(renderer);
+    const img: ?*sdl.SDL_Texture = @ptrCast(sdl_image.IMG_LoadTexture(image_renderer, "sprites.png"));
     defer sdl.SDL_DestroyTexture(img);
 
     var api = Api.ApiSDL.init(renderer.?, img.?);
@@ -55,6 +56,7 @@ pub fn main() !void {
     var done: bool = false;
     var paused: bool = false;
     while (!done) {
+        var print_debug = false;
         var event: sdl.SDL_Event = undefined;
 
         var input_state: Api.InputState = .{};
@@ -73,6 +75,7 @@ pub fn main() !void {
                     sdl.SDLK_UP => input_state.up_pressed = true,
                     sdl.SDLK_DOWN => input_state.down_pressed = true,
                     sdl.SDLK_p => paused = !paused,
+                    sdl.SDLK_i => print_debug = true,
                     else => {},
                 };
             }
@@ -105,6 +108,11 @@ pub fn main() !void {
 
         // Attempt to stay stable at 30fps.
         const fps_result = fps.update();
+        if (print_debug) {
+            std.debug.print("ZigZag Debug\n----------\n", .{});
+            std.debug.print("FPS {} {}\n", .{ fps_result.freq, fps_result.period });
+        }
+
         if (fps_result.period < FPS_PERIOD) {
             _ = sdl.SDL_Delay(FPS_PERIOD - fps_result.period);
         }

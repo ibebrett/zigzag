@@ -44,12 +44,12 @@ pub const ApiSDL = struct {
     pub fn spr(self: ApiSDL, n: u32, x: f32, y: f32, w: f32, h: f32) void {
         const src_x = (n % 16) * 8;
         const src_y = (n / 16) * 8;
-        const src: sdl.SDL_Rect = .{ .x = @intCast(i32, src_x), .y = @intCast(i32, src_y), .w = 8, .h = 8 };
+        const src: sdl.SDL_Rect = .{ .x = @intCast(src_x), .y = @intCast(src_y), .w = 8, .h = 8 };
         var tx = x;
         var ty = y;
         self.transform(&tx, &ty);
 
-        const dest: sdl.SDL_Rect = .{ .w = @floatToInt(i32, w), .h = @floatToInt(i32, h), .x = @floatToInt(i32, tx), .y = @floatToInt(i32, ty) };
+        const dest: sdl.SDL_Rect = .{ .w = @intFromFloat(w), .h = @intFromFloat(h), .x = @intFromFloat(tx), .y = @intFromFloat(ty) };
         _ = sdl.SDL_RenderCopy(self.renderer, self.texture, &src, &dest);
     }
 
@@ -88,13 +88,13 @@ pub const ApiSDL = struct {
         // Testing has proven that drawing 256 * 256 tiles is extremely slow so this is a necessary change.
         // we need to know the first visible tile.
         // First find where the camera is in "tile space." Then draw that box.
-        var tx = self.camera_x - sx;
-        var ty = self.camera_y - sy;
+        const tx = self.camera_x - sx;
+        const ty = self.camera_y - sy;
 
         // Now figure out the first tile.
         // The first tile to be draw in "tile space."
-        const first_tile_x = @floatToInt(i32, math.floor(tx / 8));
-        const first_tile_y = @floatToInt(i32, math.floor(ty / 8));
+        const first_tile_x: i32 = @intFromFloat(math.floor(tx / 8));
+        const first_tile_y: i32 = @intFromFloat(math.floor(ty / 8));
 
         // Now draw each tile
         var screen_tile_x: i32 = -1;
@@ -104,8 +104,8 @@ pub const ApiSDL = struct {
             screen_tile_y = -1;
             while (screen_tile_y < 18) {
                 defer screen_tile_y += 1;
-                const source_tile_x = screen_tile_x + first_tile_x + @intCast(i32, celx);
-                const source_tile_y = screen_tile_y + first_tile_y + @intCast(i32, cely);
+                const source_tile_x = screen_tile_x + first_tile_x + @as(i32, @intCast(celx));
+                const source_tile_y = screen_tile_y + first_tile_y + @as(i32, @intCast(cely));
 
                 const tile_x = screen_tile_x + first_tile_x;
                 const tile_y = screen_tile_y + first_tile_y;
@@ -118,8 +118,8 @@ pub const ApiSDL = struct {
                 if (source_tile_y < @max(cely, 0) or source_tile_y >= @min(cely + celh, 256)) {
                     continue;
                 }
-                const tile = self.map_data[@intCast(u32, source_tile_x + source_tile_y * 256) + offset];
-                self.spr(tile, sx + @intToFloat(f32, 8 * tile_x), sy + @intToFloat(f32, 8 * tile_y), 8.0, 8.0);
+                const tile = self.map_data[@as(u32, @intCast(source_tile_x + source_tile_y * 256)) + offset];
+                self.spr(tile, sx + @as(f32, @floatFromInt(8 * tile_x)), sy + @as(f32, @floatFromInt(8 * tile_y)), 8.0, 8.0);
             }
         }
     }
